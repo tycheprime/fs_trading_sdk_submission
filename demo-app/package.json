@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.96.0",
     "@functionspace/core": "*",
     "@functionspace/react": "*",
     "@functionspace/ui": "*",

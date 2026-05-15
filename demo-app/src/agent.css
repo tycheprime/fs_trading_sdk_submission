@@ -1,0 +1,56 @@
+/* Base styles for the BTC market-maker agent terminal. */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--fs-background, #080a0e);
+  color: var(--fs-text, #e6edf3);
+}
+
+/* Pulsing dot used by the agent status pill while a cycle runs. */
+@keyframes fs-agent-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.fs-agent-pulse {
+  animation: fs-agent-pulse 1.3s ease-in-out infinite;
+}
+
+/* Slim scrollbars for the log and source panels. */
+.fs-agent-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.fs-agent-scroll::-webkit-scrollbar-thumb {
+  background: var(--fs-border, #222b38);
+  border-radius: 4px;
+}
+
+.fs-agent-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.fs-agent-link {
+  color: var(--fs-accent, #4d9fff);
+  text-decoration: none;
+}
+
+.fs-agent-link:hover {
+  text-decoration: underline;
+}
