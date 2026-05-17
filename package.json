@@ -5,11 +5,15 @@
     "packages/*",
     "app"
   ],
+  "overrides": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1"
+  },
   "devDependencies": {
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
-    "@types/react": "^19.2.13",
-    "@types/react-dom": "^19.2.3",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
     "jsdom": "^25.0.1",
     "tsx": "^4.0.0",
     "typescript": "^5.3.0",

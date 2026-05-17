@@ -5,5 +5,8 @@
     "rootDir": "./src",
     "noEmit": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": [
+    "src/App_*.tsx"
+  ]
 }
