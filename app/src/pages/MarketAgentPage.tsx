@@ -1,4 +1,5 @@
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom';
+import { MarketsLink } from '../agent/components/MarketsLink';
 import { useMarket } from '@functionspace/react';
 import { AgentDashboard } from '../agent/AgentDashboard';
 import { MONO } from '../agent/theme';
@@ -15,9 +16,7 @@ export function MarketAgentPage() {
     return (
       <div className="fs-markets-page" style={{ fontFamily: MONO, padding: 24 }}>
         <p style={{ color: 'var(--fs-negative)' }}>{error.message}</p>
-        <Link to="/" className="fs-agent-link">
-          ← All markets
-        </Link>
+        <MarketsLink className="fs-agent-link">← All markets</MarketsLink>
       </div>
     );
   }

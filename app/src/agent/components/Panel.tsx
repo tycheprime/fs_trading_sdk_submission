@@ -1,5 +1,4 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { MONO } from '../theme';
 
 interface PanelProps {
   title: string;
@@ -34,9 +33,8 @@ export function Panel({ title, right, children, bodyStyle, style }: PanelProps) 
       >
         <span
           style={{
-            fontFamily: MONO,
             fontSize: 11,
-            letterSpacing: '0.12em',
+            letterSpacing: '0.06em',
             textTransform: 'uppercase',
             color: 'var(--fs-text-secondary)',
             fontWeight: 600,

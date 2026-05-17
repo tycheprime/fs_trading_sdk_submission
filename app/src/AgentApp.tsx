@@ -1,25 +1,27 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { FunctionSpaceProvider } from '@functionspace/react';
-import { agentTheme } from './agent/theme';
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
+import { AppLayout } from './AppLayout';
 import { MarketsHome } from './pages/MarketsHome';
 import { MarketAgentPage } from './pages/MarketAgentPage';
 import './agent.css';
 
-const config = {
-  baseUrl: import.meta.env.VITE_FS_BASE_URL,
-  autoAuthenticate: false,
-};
+const router = createBrowserRouter(
+  [
+    {
+      element: <AppLayout />,
+      children: [
+        { index: true, element: <MarketsHome /> },
+        { path: 'market/:marketId', element: <MarketAgentPage /> },
+        { path: '*', element: <Navigate to="/" replace /> },
+      ],
+    },
+  ],
+  {
+    future: {
+      v7_startTransition: false,
+    },
+  },
+);
 
 export default function AgentApp() {
-  return (
-    <FunctionSpaceProvider config={config} theme={agentTheme}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<MarketsHome />} />
-          <Route path="/market/:marketId" element={<MarketAgentPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </FunctionSpaceProvider>
-  );
+  return <RouterProvider router={router} />;
 }

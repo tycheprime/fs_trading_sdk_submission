@@ -29,6 +29,7 @@ export function AgentDashboard({ marketId }: { marketId: string | number }) {
 
   return (
     <div
+      className="fs-agent-page"
       style={{
         display: 'flex',
         flexDirection: 'column',

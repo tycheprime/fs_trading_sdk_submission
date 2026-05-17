@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type { MarketState } from '@functionspace/core';
 import { compareAgentToCrowd } from '../compare';
 import { Panel } from './Panel';
-import { MONO } from '../theme';
+import { MONO } from '../theme'; // stat rows only
 import { formatOutcome } from '../format';
 import type { AgentEstimate, BeliefBuild } from '../types';
 
@@ -41,7 +41,6 @@ export function AgentVsCrowdPanel({
           <div>
             <div
               style={{
-                fontFamily: MONO,
                 fontSize: 13,
                 fontWeight: 600,
                 color: DIV_COLOR[cmp.divergence],

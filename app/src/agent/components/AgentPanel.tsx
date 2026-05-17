@@ -108,11 +108,10 @@ export function AgentPanel({ agent }: { agent: UseAgentResult }) {
                 margin: '10px 0 0',
                 fontSize: 13,
                 lineHeight: 1.5,
-                color: 'var(--fs-text)',
-                fontStyle: 'italic',
+                color: 'var(--fs-text-secondary)',
               }}
             >
-              “{estimate.rationale}”
+              {estimate.rationale}
             </p>
             {build && (
               <div

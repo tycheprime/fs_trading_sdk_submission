@@ -1,4 +1,11 @@
-/* Base styles for the BTC market-maker agent terminal. */
+/* Base styles for the oracle agent app. */
+
+:root {
+  --fs-agent-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --fs-agent-mono: 'SF Mono', 'JetBrains Mono', 'Fira Code', ui-monospace, Menlo,
+    monospace;
+}
 
 * {
   box-sizing: border-box;
@@ -11,9 +18,45 @@ body,
   height: 100%;
 }
 
+html {
+  font-family: var(--fs-agent-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 body {
   background: var(--fs-background, #080a0e);
   color: var(--fs-text, #e6edf3);
+  font-family: var(--fs-agent-sans);
+}
+
+/* FunctionSpaceProvider root: theme font + full height */
+#root > div {
+  min-height: 100%;
+  font-family: var(--fs-font-family, var(--fs-agent-sans));
+}
+
+.fs-markets-page,
+.fs-agent-page {
+  font-family: var(--fs-font-family, var(--fs-agent-sans));
+}
+
+.fs-markets-page h1,
+.fs-markets-page h2,
+.fs-markets-page p,
+.fs-markets-page li,
+.fs-agent-page h1,
+.fs-agent-page h2,
+.fs-agent-page p,
+.fs-agent-page li,
+.fs-agent-page button,
+.fs-agent-page input,
+.fs-agent-page select,
+.fs-agent-page textarea,
+.fs-markets-page button,
+.fs-markets-page input,
+.fs-markets-page select {
+  font-family: inherit;
 }
 
 /* Pulsing dot used by the agent status pill while a cycle runs. */
@@ -62,6 +105,117 @@ body {
   text-decoration: underline;
 }
 
+/* Market page header: back link must not shrink inside ellipsis row */
+.fs-agent-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--fs-border, #222b38);
+  background: var(--fs-surface, #11161f);
+  flex-wrap: wrap;
+}
+
+.fs-agent-header-left {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+}
+
+.fs-header-logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  background: var(--fs-primary, #f7931a);
+  color: #1a1206;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  flex-shrink: 0;
+  text-decoration: none;
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+}
+
+.fs-agent-header-titles {
+  min-width: 0;
+}
+
+.fs-header-brand {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  color: inherit;
+  text-decoration: none;
+}
+
+.fs-header-brand:hover {
+  color: var(--fs-text, #e6edf3);
+}
+
+.fs-header-brand-accent {
+  color: var(--fs-primary, #f7931a);
+}
+
+.fs-header-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  min-width: 0;
+  max-width: min(520px, 100%);
+  font-size: 12px;
+  color: var(--fs-text-secondary, #8b949e);
+}
+
+.fs-header-back {
+  flex-shrink: 0;
+  padding: 4px 2px;
+  margin: -4px -2px;
+  position: relative;
+  z-index: 2;
+}
+
+/* MarketsLink uses <button> to avoid React Router intercepting <a href="/"> */
+button.fs-header-logo,
+button.fs-header-brand,
+button.fs-header-back,
+button.fs-agent-link {
+  font: inherit;
+  cursor: pointer;
+}
+
+button.fs-header-logo {
+  border: none;
+}
+
+button.fs-header-brand,
+button.fs-header-back {
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  color: inherit;
+}
+
+button.fs-header-back {
+  padding: 4px 2px;
+  margin: -4px -2px;
+}
+
+.fs-header-market-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
 /* Markets landing */
 .fs-markets-page {
   min-height: 100vh;
@@ -82,7 +236,7 @@ body {
 .fs-markets-brand {
   font-size: 22px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.02em;
 }
 
 .fs-markets-accent {
@@ -140,7 +294,7 @@ body {
 }
 
 .fs-markets-retry {
-  font-family: inherit;
+  font-family: var(--fs-font-family, var(--fs-agent-sans));
   font-size: 12px;
   padding: 6px 10px;
   border-radius: 6px;

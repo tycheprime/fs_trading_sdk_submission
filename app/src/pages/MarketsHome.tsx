@@ -1,6 +1,6 @@
 import { useMarkets } from '@functionspace/react';
 import { MarketGrid } from '../agent/components/MarketGrid';
-import { MONO } from '../agent/theme';
+import { MONO } from '../agent/theme'; // meta labels only
 
 export function MarketsHome() {
   const { markets, loading, error, refetch } = useMarkets({
@@ -14,7 +14,7 @@ export function MarketsHome() {
     <div className="fs-markets-page">
       <header className="fs-markets-header">
         <div>
-          <div className="fs-markets-brand" style={{ fontFamily: MONO }}>
+          <div className="fs-markets-brand">
             ORACLE <span className="fs-markets-accent">AGENT</span>
           </div>
           <p className="fs-markets-tagline">

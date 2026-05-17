@@ -6,4 +6,6 @@ body {
   /* background: #ffffff; native-light */
   background: #111111; /* native-dark */
   margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
 }
