@@ -253,7 +253,7 @@ None. All plan references are accurate.
 | Exported from ui index.ts | Yes | WS3 Step 3 | -- |
 | Architecture test updated | Yes | WS3 Step 4 | -- |
 | Hook behavior tests added | Yes | WS3 Step 5 | -- |
-| Demo added to demo-app | MISSING | -- | No demo step in any work stream |
+| Demo added to app | MISSING | -- | No demo step in any work stream |
 | PLAYBOOK.md updated | Yes | Doc Updates | -- |
 
 **Missing items:** 1 of 15 checklist items not addressed
@@ -301,7 +301,7 @@ None. Sequential dependency chain (core -> react -> ui) is correctly ordered.
 
 ## Recommended Additions
 
-1. Add a step to Work Stream 3 (after Step 3): "Add OrderDepthChart demo to demo-app with sample marketId"
+1. Add a step to Work Stream 3 (after Step 3): "Add OrderDepthChart demo to app with sample marketId"
 2. Consider adding basic unit tests for `queryOrderDepth` (validates request construction and response parsing)
 ```
 
@@ -379,7 +379,7 @@ None. Plan is fully convention-compliant.
 ## What Was Built
 Added a full-stack order depth visualization feature spanning all three SDK layers. The core layer provides `queryOrderDepth` for fetching order book data and `OrderDepthData`/`DepthLevel` types. The react layer provides `useOrderDepth`, a standard data-fetching hook following the canonical pattern. The ui layer provides `OrderDepthChart`, a self-contained Recharts-based area chart widget that displays bid/ask depth with theme-aware colors.
 
-A demo was added to the demo-app showing the widget with a sample market ID (added per validator recommendation).
+A demo was added to the app showing the widget with a sample market ID (added per validator recommendation).
 
 ## Files Changed
 - CREATE `packages/core/src/types/orderDepth.ts` -- OrderDepthData and DepthLevel types
@@ -392,10 +392,10 @@ A demo was added to the demo-app showing the widget with a sample market ID (add
 - MODIFY `packages/ui/src/styles/base.css` -- added .fs-order-depth styles and derived-variables entry
 - MODIFY `tests/architecture.test.ts` -- added export checks for all new symbols
 - MODIFY `tests/hooks.test.tsx` -- added useOrderDepth test suite (4 tests)
-- MODIFY `demo-app/src/App.tsx` -- added OrderDepthChart demo section
+- MODIFY `app/src/App.tsx` -- added OrderDepthChart demo section
 
 ## Deviations from Plan
-- Added demo-app integration (was flagged as missing by validator-gaps, added to plan before implementation)
+- Added app integration (was flagged as missing by validator-gaps, added to plan before implementation)
 - No unit tests for queryOrderDepth core function (validator flagged this as a gap; deferred to follow-up since hook tests cover the integration path)
 
 ## Unresolved Issues

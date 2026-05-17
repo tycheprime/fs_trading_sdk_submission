@@ -3,7 +3,7 @@
   "private": true,
   "workspaces": [
     "packages/*",
-    "demo-app"
+    "app"
   ],
   "devDependencies": {
     "@testing-library/react": "^16.3.2",

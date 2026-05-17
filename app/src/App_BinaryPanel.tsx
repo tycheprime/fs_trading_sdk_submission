@@ -3,7 +3,7 @@ import { MarketCharts, BinaryPanel, MarketStats, PositionTable, PasswordlessAuth
 import { ArticlePage } from './pages/ArticlePage';
 import { config, MARKET_ID, widgetTheme } from './App';
 
-// Reusable layout content (used by both demo-app and docs site)
+// Reusable layout content (used by both app and docs site)
 // All 4 xPoint modes displayed together for visual/functional testing.
 // In practice, a consumer would mount only one BinaryPanel at a time.
 export function BinaryPanelLayout({ marketId }: { marketId: string | number }) {

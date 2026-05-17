@@ -11,7 +11,7 @@ module.exports = function sdkWebpackPlugin() {
             '@functionspace/core': path.resolve(packagesDir, 'core/src'),
             '@functionspace/react': path.resolve(packagesDir, 'react/src'),
             '@functionspace/ui': path.resolve(packagesDir, 'ui/src'),
-            '@demo-app': path.resolve(packagesDir, '../demo-app/src'),
+            '@app': path.resolve(packagesDir, '../app/src'),
           },
           // SDK source uses ESM .js extension imports (e.g., from './types.js')
           // but actual files are .ts. This tells webpack to try .ts when .js is requested.
@@ -28,7 +28,7 @@ module.exports = function sdkWebpackPlugin() {
                 path.resolve(packagesDir, 'core/src'),
                 path.resolve(packagesDir, 'react/src'),
                 path.resolve(packagesDir, 'ui/src'),
-                path.resolve(packagesDir, '../demo-app/src'),
+                path.resolve(packagesDir, '../app/src'),
               ],
               use: {
                 loader: require.resolve('babel-loader'),

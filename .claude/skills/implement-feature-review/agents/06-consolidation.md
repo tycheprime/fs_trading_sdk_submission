@@ -101,7 +101,7 @@ npx vitest run --reporter=verbose 2>&1
 ```
 
 ```bash
-cd demo-app && npx vite build 2>&1
+cd app && npx vite build 2>&1
 ```
 
 ```bash

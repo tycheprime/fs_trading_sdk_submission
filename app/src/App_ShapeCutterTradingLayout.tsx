@@ -3,7 +3,7 @@ import { MarketCharts, ShapeCutter, MarketStats, PositionTable, PasswordlessAuth
 import { ArticlePage } from './pages/ArticlePage';
 import { config, MARKET_ID, widgetTheme } from './App';
 
-// Reusable layout content (used by both demo-app and docs site)
+// Reusable layout content (used by both app and docs site)
 export function ShapeCutterTradingLayout({ marketId }: { marketId: string | number }) {
   return (
     <>

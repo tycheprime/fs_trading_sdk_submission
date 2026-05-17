@@ -1,5 +1,5 @@
 // Public demo market used for live widget examples
-// This matches demo-app/.env VITE_FS_MARKET_ID
+// This matches app/.env VITE_FS_MARKET_ID
 export const DEMO_MARKET_ID = 23;
 // export const DEMO_MARKET_ID = 15;
 

@@ -1,9 +1,6 @@
-import { useAuth } from '@functionspace/react';
-import { PasswordlessAuthWidget } from '@functionspace/ui';
 import type { MarketState } from '@functionspace/core';
 import { StatusPill } from './StatusPill';
 import { MONO } from '../theme';
-import { formatUsd } from '../format';
 import type { AgentStatus } from '../types';
 
 interface HeaderProps {
@@ -11,10 +8,8 @@ interface HeaderProps {
   market: MarketState | null;
 }
 
-// Top bar: brand, market title, agent status, wallet, and passwordless auth.
+// Top bar: brand, market title, and agent status.
 export function Header({ status, market }: HeaderProps) {
-  const { user, isAuthenticated } = useAuth();
-
   return (
     <header
       style={{
@@ -72,20 +67,7 @@ export function Header({ status, market }: HeaderProps) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <StatusPill status={status} />
-        {isAuthenticated && user && (
-          <div style={{ fontFamily: MONO, fontSize: 12, textAlign: 'right' }}>
-            <div style={{ color: 'var(--fs-text-secondary)', fontSize: 10 }}>
-              WALLET
-            </div>
-            <div style={{ color: 'var(--fs-positive)', fontWeight: 700 }}>
-              {formatUsd(user.walletValue)}
-            </div>
-          </div>
-        )}
-        <PasswordlessAuthWidget />
-      </div>
+      <StatusPill status={status} />
     </header>
   );
 }

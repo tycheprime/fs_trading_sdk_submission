@@ -13,6 +13,7 @@ export interface AgentEstimate {
   pointEstimate: number; // best estimate of BTC USD price on Dec 31 2026
   low: number; // low end of the 90% confidence interval
   high: number; // high end of the 90% confidence interval
+  changedMind: boolean; // true when this turn materially updated the forecast
   confidence: 'low' | 'medium' | 'high';
   rationale: string;
   keySources: string[]; // titles of the sources that drove the estimate
@@ -31,7 +32,6 @@ export type AgentStatus =
   | 'searching'
   | 'thinking'
   | 'previewing'
-  | 'committing'
   | 'error';
 
 // One full pass of the agent loop, kept for the activity log.
@@ -40,9 +40,9 @@ export interface CycleRecord {
   startedAt: number;
   finishedAt: number | null;
   sources: ExaResult[];
+  newSourceCount: number;
+  skipped: boolean; // true when exa returned no new URLs — forecast unchanged
   estimate: AgentEstimate | null;
   beliefBuild: BeliefBuild | null;
-  committed: boolean; // true if a trade was placed this cycle
-  positionId: string | number | null;
   error: string | null;
 }

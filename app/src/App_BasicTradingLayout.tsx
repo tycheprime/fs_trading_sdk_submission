@@ -6,7 +6,7 @@ import { config, MARKET_ID, widgetTheme } from './App';
 const CHART_RATIO = 7
 const PANEL_RATIO = 3;
 
-// Reusable layout content (used by both demo-app and docs site)
+// Reusable layout content (used by both app and docs site)
 export function BasicTradingLayout({ marketId }: { marketId: string | number }) {
   return (
     <>

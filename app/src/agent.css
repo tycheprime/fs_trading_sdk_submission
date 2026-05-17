@@ -46,6 +46,13 @@ body {
   background: transparent;
 }
 
+/* Right-column panels keep their natural height so the rail itself scrolls,
+   instead of flex-shrinking a panel shorter than its content (which spilled
+   the Agent Control buttons over the exa.ai Signal panel below). */
+.fs-agent-rail > * {
+  flex-shrink: 0;
+}
+
 .fs-agent-link {
   color: var(--fs-accent, #4d9fff);
   text-decoration: none;

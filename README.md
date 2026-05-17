@@ -22,7 +22,7 @@ packages/
 ├── core/       @functionspace/core    Pure TypeScript -- API client, math, types
 ├── react/      @functionspace/react   React integration -- Provider, hooks, context
 └── ui/         @functionspace/ui      React components -- charts, trading panels, tables
-demo-app/                              Example implementation showing widget usage
+app/                              Example implementation showing widget usage
 ```
 
 ### Layer Boundaries
@@ -340,7 +340,7 @@ You never need to specify chart colors directly -- they follow your theme tokens
 ### Demo App
 
 ```bash
-cd demo-app && npx vite dev
+cd app && npx vite dev
 ```
 
 ### Tests
@@ -368,7 +368,7 @@ npx vitest run
 ### Build Verification
 
 ```bash
-cd demo-app && npx vite build
+cd app && npx vite build
 cd packages/docs && npx docusaurus build
 ```
 

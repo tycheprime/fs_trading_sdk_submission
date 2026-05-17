@@ -18,12 +18,11 @@ const labelStyle: CSSProperties = {
   color: 'var(--fs-text-secondary)',
 };
 
-// The agent's control center: latest estimate, payout preview, and the
-// run / arm / interval / position-size controls.
+// The agent's control center: latest estimate and the run / auto-cycle /
+// interval controls.
 export function AgentPanel({ agent }: { agent: UseAgentResult }) {
   const estimate = agent.currentCycle?.estimate ?? null;
   const build = agent.currentCycle?.beliefBuild ?? null;
-  const payout = agent.payout;
 
   return (
     <Panel title="Agent Control">
@@ -71,6 +70,11 @@ export function AgentPanel({ agent }: { agent: UseAgentResult }) {
               >
                 {estimate.confidence.toUpperCase()} CONFIDENCE
               </span>
+              {estimate.changedMind ? (
+                <span style={{ color: 'var(--fs-accent)' }}>changed mind</span>
+              ) : (
+                <span>held forecast</span>
+              )}
             </div>
             <p
               style={{
@@ -110,34 +114,6 @@ export function AgentPanel({ agent }: { agent: UseAgentResult }) {
           </div>
         )}
 
-        {/* Payout preview */}
-        {payout && (
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              fontFamily: MONO,
-              fontSize: 12,
-              borderTop: '1px solid var(--fs-border)',
-              borderBottom: '1px solid var(--fs-border)',
-              padding: '8px 0',
-            }}
-          >
-            <span style={{ color: 'var(--fs-text-secondary)' }}>
-              max payout{' '}
-              <strong style={{ color: 'var(--fs-positive)' }}>
-                {formatUsd(payout.maxPayout)}
-              </strong>
-            </span>
-            <span style={{ color: 'var(--fs-text-secondary)' }}>
-              if BTC ≈{' '}
-              <strong style={{ color: 'var(--fs-text)' }}>
-                {formatUsd(payout.maxPayoutOutcome)}
-              </strong>
-            </span>
-          </div>
-        )}
-
         {/* Controls */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <ToggleRow
@@ -145,7 +121,7 @@ export function AgentPanel({ agent }: { agent: UseAgentResult }) {
             hint={
               agent.autoMode && agent.secondsUntilNext != null
                 ? `next cycle in ${agent.secondsUntilNext}s`
-                : 'run the loop on a timer'
+                : `exa search every ${agent.intervalSec}s`
             }
             on={agent.autoMode}
             onChange={agent.setAutoMode}
@@ -156,64 +132,20 @@ export function AgentPanel({ agent }: { agent: UseAgentResult }) {
             suffix="sec"
             value={agent.intervalSec}
             min={20}
+            max={300}
             step={10}
             onChange={agent.setIntervalSec}
           />
-
-          <ToggleRow
-            label="Auto-trade"
-            hint={
-              agent.armed
-                ? agent.isAuthenticated
-                  ? 're-positions every cycle'
-                  : 'log in to enable trading'
-                : 'arm to trade automatically'
-            }
-            hintColor={
-              agent.armed && !agent.isAuthenticated
-                ? 'var(--fs-negative)'
-                : undefined
-            }
-            on={agent.armed}
-            onChange={agent.setArmed}
-          />
-
-          <NumberRow
-            label="Position size"
-            suffix="$"
-            value={agent.positionSize}
-            min={1}
-            step={5}
-            onChange={agent.setPositionSize}
-          />
         </div>
 
-        {/* Buttons */}
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button
-            onClick={agent.runCycleNow}
-            disabled={agent.busy || agent.marketLoading}
-            style={buttonStyle(false, agent.busy || agent.marketLoading)}
-          >
-            {agent.busy ? 'Running…' : 'Run cycle now'}
-          </button>
-          <button
-            onClick={agent.commitNow}
-            disabled={
-              agent.busy ||
-              !agent.isAuthenticated ||
-              !agent.currentCycle?.beliefBuild
-            }
-            style={buttonStyle(
-              true,
-              agent.busy ||
-                !agent.isAuthenticated ||
-                !agent.currentCycle?.beliefBuild,
-            )}
-          >
-            Commit belief
-          </button>
-        </div>
+        {/* Action */}
+        <button
+          onClick={agent.runCycleNow}
+          disabled={agent.busy || agent.marketLoading}
+          style={buttonStyle(agent.busy || agent.marketLoading)}
+        >
+          {agent.busy ? 'Running…' : 'Run cycle now'}
+        </button>
 
         {agent.error && (
           <div
@@ -234,9 +166,9 @@ export function AgentPanel({ agent }: { agent: UseAgentResult }) {
   );
 }
 
-function buttonStyle(filled: boolean, disabled: boolean): CSSProperties {
+function buttonStyle(disabled: boolean): CSSProperties {
   return {
-    flex: 1,
+    width: '100%',
     fontFamily: MONO,
     fontSize: 12,
     fontWeight: 600,
@@ -246,11 +178,10 @@ function buttonStyle(filled: boolean, disabled: boolean): CSSProperties {
     cursor: disabled ? 'not-allowed' : 'pointer',
     opacity: disabled ? 0.45 : 1,
     border: '1px solid var(--fs-primary)',
-    background: filled ? 'var(--fs-primary)' : 'transparent',
-    color: filled ? '#1a1206' : 'var(--fs-primary)',
+    background: 'var(--fs-primary)',
+    color: '#1a1206',
   };
 }
-
 function ToggleRow({
   label,
   hint,
@@ -360,3 +291,4 @@ function NumberRow({
     </div>
   );
 }
+

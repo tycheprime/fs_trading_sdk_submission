@@ -12,7 +12,7 @@ packages/
 ├── react/    # React integration - Provider, hooks, theme system
 ├── ui/       # React components - TradePanel, ConsensusChart, etc.
 └── docs/     # Docusaurus documentation site with live embedded widgets
-demo-app/     # Example implementation showing widget usage
+app/     # Example implementation showing widget usage
 ```
 
 ## Architecture
@@ -108,7 +108,7 @@ Every new function must be classifiable by both layer AND category. This keeps t
 | Add chart zoom/pan math | `packages/core/src/chart/zoom.ts` |
 | Add internal UI primitives | `packages/ui/src/components/` (not exported from package root) |
 | Edit documentation content | `packages/docs/docs/` (Markdown/MDX files) |
-| Add live widget demos | `packages/docs/src/components/` (WidgetDemo, ChartToggle); starter kit layouts import from `demo-app/src/` via `@demo-app` alias |
+| Add live widget demos | `packages/docs/src/components/` (WidgetDemo, ChartToggle); starter kit layouts import from `app/src/` via `@app` alias |
 | Edit docs site config | `packages/docs/docusaurus.config.js`, `packages/docs/src/css/custom.css` |
 | Edit docs search config | `packages/docs/docusaurus.config.js` (`themes` array, `@easyops-cn/docusaurus-search-local`) |
 | Edit docs SDK integration | `packages/docs/src/plugins/sdk-webpack-plugin.js`, `packages/docs/src/theme/Root.tsx` |
@@ -123,7 +123,7 @@ Every new function must be classifiable by both layer AND category. This keeps t
 
 ```bash
 npx vitest run                          # All tests (required)
-cd demo-app && npx vite build           # Demo app build verification (required)
+cd app && npx vite build           # Demo app build verification (required)
 cd packages/docs && npx docusaurus build  # Docs site build verification (required)
 ```
 
@@ -154,7 +154,7 @@ cd packages/docs && npx docusaurus build  # Docs site build verification (requir
 ## Dev Server
 
 ```bash
-cd demo-app && npx vite dev              # Demo app dev server
+cd app && npx vite dev              # Demo app dev server
 cd packages/docs && npx docusaurus start  # Docs site dev server
 ```
 

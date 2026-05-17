@@ -3,7 +3,7 @@ import { MarketCharts, MarketStats, BucketRangeSelector, PasswordlessAuthWidget 
 import { ArticlePage } from './pages/ArticlePage';
 import { config, MARKET_ID, widgetTheme } from './App';
 
-// Reusable layout content (used by both demo-app and docs site)
+// Reusable layout content (used by both app and docs site)
 // Must be rendered inside FunctionSpaceProvider (useDistributionState needs context)
 export function DistRangeLayout({ marketId }: { marketId: string | number }) {
   const distState = useDistributionState(marketId);

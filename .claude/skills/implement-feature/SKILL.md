@@ -236,7 +236,7 @@ Run full regression on the merged result:
 
 ```bash
 npx vitest run                          # All tests must pass
-cd demo-app && npx vite build           # Build must succeed
+cd app && npx vite build           # Build must succeed
 cd packages/docs && npx docusaurus build  # Docs site must build
 ```
 

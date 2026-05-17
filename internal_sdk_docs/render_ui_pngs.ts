@@ -8,7 +8,7 @@
  * ARCHITECTURE
  * ═══════════════════════════════════════════════════════════════════════════════
  *
- * This script works with two companion React apps in demo-app/src/:
+ * This script works with two companion React apps in app/src/:
  *
  *   App_AllComponents.tsx         -- Renders every UI component on one page.
  *                                  Each component is wrapped in a <div data-capture="ComponentName">
@@ -19,7 +19,7 @@
  *                                  Each layout is wrapped in <div data-capture="StarterKit_Name">.
  *                                  Uses noAuthConfig so AuthWidget renders logged-out.
  *
- * Only one app can be active at a time in demo-app/src/main.tsx. You must set
+ * Only one app can be active at a time in app/src/main.tsx. You must set
  * the correct import before running each mode (see usage below).
  *
  * ═══════════════════════════════════════════════════════════════════════════════
@@ -39,12 +39,12 @@
  *   1. Install deps (one-time):
  *        npm install playwright && npx playwright install chromium
  *
- *   2. Set the correct App import in demo-app/src/main.tsx (see modes above)
+ *   2. Set the correct App import in app/src/main.tsx (see modes above)
  *
  *   3. Start the backend API server
  *
  *   4. Start the demo app:
- *        cd demo-app && npm run dev
+ *        cd app && npm run dev
  *
  * ═══════════════════════════════════════════════════════════════════════════════
  * USAGE

@@ -32,7 +32,7 @@ export async function searchBitcoinNews(
     const body = await res.text();
     if (res.status === 401 || res.status === 403) {
       throw new Error(
-        'exa.ai rejected the request. Add a valid EXA_API_KEY to demo-app/.env.local and restart the dev server.',
+        'exa.ai rejected the request. Add a valid EXA_API_KEY to app/.env.local and restart the dev server.',
       );
     }
     throw new Error(`exa.ai search failed (${res.status}): ${body.slice(0, 200)}`);

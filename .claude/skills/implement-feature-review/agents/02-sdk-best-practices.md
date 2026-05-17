@@ -49,7 +49,7 @@ git diff -- packages/core/src/index.ts packages/react/src/index.ts packages/ui/s
 For every NEW export added to any index.ts file in this implementation:
 
 1. Grep for imports of the new symbol across the codebase:
-   `grep -rn "<symbol-name>" packages/ demo-app/ tests/ --include="*.ts" --include="*.tsx" | grep -v "index.ts" | grep -v "node_modules"`
+   `grep -rn "<symbol-name>" packages/ app/ tests/ --include="*.ts" --include="*.tsx" | grep -v "index.ts" | grep -v "node_modules"`
 2. Verify at least one import exists outside the defining package's index.ts
 3. If zero consumers found: flag as CRITICAL -- orphan export (dead code in the public API)
 4. If consumers are only in tests: flag as WARNING -- not consumed by any production code

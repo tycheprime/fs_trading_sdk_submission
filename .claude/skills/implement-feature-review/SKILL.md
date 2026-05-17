@@ -186,7 +186,7 @@ After ALL 8 agents complete (or fail), read brief summaries of each agent's key 
   1. Read all 8 report files from `{OUTPUT_DIR}/`
   2. Cross-reference within domains, then across domains (see consolidation prompt for domain groupings)
   3. Deduplicate findings with confidence scoring
-  4. Run regression (`npx vitest run` + `cd demo-app && npx vite build` + `cd packages/docs && npx docusaurus build`)
+  4. Run regression (`npx vitest run` + `cd app && npx vite build` + `cd packages/docs && npx docusaurus build`)
   5. Write `{OUTPUT_DIR}/review-{FEATURE_NAME}.md` (the detailed handoff report)
   6. Write `{OUTPUT_DIR}/doc-updates-draft.md` (proposed edits to living docs)
 

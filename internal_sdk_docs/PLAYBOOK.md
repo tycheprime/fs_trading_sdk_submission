@@ -872,7 +872,7 @@ Before creating anything, decide the correct approach (see "When to Create a New
 - [ ] Make changes following existing patterns
 - [ ] Update tests if prop interfaces or behavior changed
 - [ ] **Run `npx vitest run` after changes  -- all tests pass**
-- [ ] **Run `cd demo-app && npx vite build`  -- build succeeds**
+- [ ] **Run `cd app && npx vite build`  -- build succeeds**
 - [ ] **Update CLAUDE.md and PLAYBOOK.md** if the change introduced new patterns, conventions, or reference data
 
 ### Adding Widget Documentation
@@ -906,7 +906,7 @@ Key rules:
 - All widgets MUST be wrapped in `<WidgetDemo>` (provides `BrowserOnly` for SSR safety + error boundary)
 - Use `DEMO_MARKET_ID` and `DEMO_USERNAME` from `@site/src/constants`
 - Auth widget forms are globally disabled via CSS in `custom.css` (cancel/back buttons remain enabled)
-- Starter kit pages import layout components from `@demo-app/` (alias for `demo-app/src/`), not from docs components. Each demo-app layout exports a named inner component that accepts `marketId`/`username` props.
+- Starter kit pages import layout components from `@app/` (alias for `app/src/`), not from docs components. Each app layout exports a named inner component that accepts `marketId`/`username` props.
 - Escape curly braces in MDX prose text with `\{...\}` to prevent JSX interpretation
 - Verify build: `cd packages/docs && npx docusaurus build`
 

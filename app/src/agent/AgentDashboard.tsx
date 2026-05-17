@@ -6,10 +6,9 @@ import { MarketChart } from './components/MarketChart';
 import { AgentPanel } from './components/AgentPanel';
 import { ActivityLog } from './components/ActivityLog';
 import { SourcesPanel } from './components/SourcesPanel';
-import { PositionsPanel } from './components/PositionsPanel';
 
 // The full agent terminal: header, distribution chart + cycle log on the
-// left, agent controls + signal + positions on the right.
+// left, agent controls + signal on the right.
 export function AgentDashboard() {
   const agent = useAgent(BTC_MARKET_ID);
 
@@ -47,7 +46,7 @@ export function AgentDashboard() {
             {agent.market ? (
               <MarketChart
                 market={agent.market}
-                beliefBuild={agent.currentCycle?.beliefBuild ?? null}
+                beliefBuild={agent.beliefBuild}
               />
             ) : (
               <div
@@ -68,9 +67,9 @@ export function AgentDashboard() {
           <ActivityLog cycles={agent.cycles} />
         </div>
 
-        {/* Right column: agent controls, exa signal, positions. */}
+        {/* Right column: agent controls and exa signal. */}
         <div
-          className="fs-agent-scroll"
+          className="fs-agent-scroll fs-agent-rail"
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -80,11 +79,7 @@ export function AgentDashboard() {
           }}
         >
           <AgentPanel agent={agent} />
-          <SourcesPanel sources={agent.currentCycle?.sources ?? []} />
-          <PositionsPanel
-            marketId={BTC_MARKET_ID}
-            currentPositionId={agent.currentPositionId}
-          />
+          <SourcesPanel sources={agent.allSources} />
         </div>
       </main>
     </div>

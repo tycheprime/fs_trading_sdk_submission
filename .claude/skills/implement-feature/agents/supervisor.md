@@ -44,7 +44,7 @@ Break your work stream into a detailed, ordered action list. For each action:
 
 Rule: If a created item has no consumer, it is dead code. Either find the consumer or remove it from the plan.
 
-Note: Not every feature traverses all 3 layers. Core-only additions may have hooks as consumers. Hooks without UI widgets should have demo-app or test usage as consumers. Types consumed only within their own package still need at least one import site.
+Note: Not every feature traverses all 3 layers. Core-only additions may have hooks as consumers. Hooks without UI widgets should have app or test usage as consumers. Types consumed only within their own package still need at least one import site.
 
 ### Step 3: Dispatch Implementation Agent
 

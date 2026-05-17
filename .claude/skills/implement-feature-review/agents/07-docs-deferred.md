@@ -95,7 +95,7 @@ Read the SDK Expansion Checklist in PLAYBOOK.md. For the type of change implemen
 
 - [ ] PLAYBOOK.md updated (Widget Reference, File Locations, Available Hooks, Core Functions -- as applicable)
 - [ ] CLAUDE.md updated (test table, architecture -- as applicable)
-- [ ] Demo added to demo-app (if new widget/component)
+- [ ] Demo added to app (if new widget/component)
 
 ### 7. Consumer Integration Audit
 

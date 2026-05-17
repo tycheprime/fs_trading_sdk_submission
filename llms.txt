@@ -7,7 +7,7 @@ These packages are not yet published to npm. Clone the repo and use workspace li
 ## Embed Pre-Built Widgets
 
 - [UI Package Reference](https://docs.functionspace.dev/ui.txt): Widget catalog (ConsensusChart, TradePanel, PositionTable, MarketStats, MarketCharts, BinaryPanel, AuthWidget, PasswordlessAuthWidget), theming with 4 presets and 30-token system, composition patterns. Requires all 3 packages. Repo path: `packages/docs/static/ui.txt`
-- [Starter Kits](https://docs.functionspace.dev/docs/ui/starter-kits): 6 pre-built layouts (Basic, Binary, Custom Shape, Distribution, Advanced, Multi-Market) with live demos and source code at `demo-app/src/App_*.tsx`
+- [Starter Kits](https://docs.functionspace.dev/docs/ui/starter-kits): 6 pre-built layouts (Basic, Binary, Custom Shape, Distribution, Advanced, Multi-Market) with live demos and source code at `app/src/App_*.tsx`
 
 ## Build Custom UI with React Hooks
 

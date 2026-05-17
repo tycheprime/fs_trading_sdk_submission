@@ -35,7 +35,7 @@ Read the "SDK Expansion Checklist" in PLAYBOOK.md. For the type of change being 
 - [ ] Loading state handled
 - [ ] Error state handled
 - [ ] Exported from `packages/ui/src/index.ts`
-- [ ] Demo added to demo-app
+- [ ] Demo added to app
 - [ ] Architecture test updated
 - [ ] PLAYBOOK.md updated (Widget Reference, File Locations)
 

@@ -4,7 +4,7 @@ import path from 'path';
 
 // The agent calls exa.ai and the Claude API. Both are reached through dev-server
 // proxies so the API keys stay server-side and never reach the browser bundle.
-// Keys are read from demo-app/.env.local (gitignored). See README_AGENT.md.
+// Keys are read from app/.env.local (gitignored). See README_AGENT.md.
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 

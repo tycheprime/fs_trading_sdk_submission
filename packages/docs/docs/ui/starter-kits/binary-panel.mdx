@@ -5,7 +5,7 @@ description: "Binary Panel starter kit demonstrating BinaryPanel in all four thr
 ---
 
 import WidgetDemo from '@site/src/components/WidgetDemo';
-import { BinaryPanelLayout } from '@demo-app/App_BinaryPanel';
+import { BinaryPanelLayout } from '@app/App_BinaryPanel';
 import { DEMO_MARKET_ID, DEMO_USERNAME } from '@site/src/constants';
 
 # Binary Panel
@@ -14,7 +14,7 @@ import { DEMO_MARKET_ID, DEMO_USERNAME } from '@site/src/constants';
   <BinaryPanelLayout marketId={DEMO_MARKET_ID} username={DEMO_USERNAME} />
 </WidgetDemo>
 
-**File:** `demo-app/src/App_BinaryPanel.tsx`
+**File:** `app/src/App_BinaryPanel.tsx`
 
 Demonstrates the `BinaryPanel` in all four threshold modes simultaneously (static, variable, dynamic-mode, dynamic-mean), paired with a tabbed chart.
 

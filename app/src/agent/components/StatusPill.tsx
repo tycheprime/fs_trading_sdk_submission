@@ -6,7 +6,6 @@ const META: Record<AgentStatus, { label: string; color: string; pulse: boolean }
   searching: { label: 'SEARCHING EXA', color: 'var(--fs-accent)', pulse: true },
   thinking: { label: 'CLAUDE THINKING', color: 'var(--fs-accent)', pulse: true },
   previewing: { label: 'BUILDING BELIEF', color: 'var(--fs-accent)', pulse: true },
-  committing: { label: 'PLACING TRADE', color: 'var(--fs-primary)', pulse: true },
   error: { label: 'ERROR', color: 'var(--fs-negative)', pulse: false },
 };
 
