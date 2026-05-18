@@ -1,130 +1,39 @@
 /**
- * Agent session cache API — persists Tycheprime Agent forecasts so new visitors
- * can load prior results without re-running Exa + Claude.
- *
- * Storage: Postgres when DATABASE_URL is set, else JSON files under .data/
+ * Tycheprime Agent cache API — Postgres (Render) or local JSON files.
  */
 import http from 'node:http';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { loadAppEnv, storageMode } from './db.mjs';
+import {
+  bulkWriteSessions,
+  getGlobalStats,
+  listForecastHistory,
+  listSummaries,
+  readSession,
+  writeSession,
+} from './store.mjs';
+import {
+  claudeProxyConfig,
+  exaProxyConfig,
+  proxyToUpstream,
+} from './proxy.mjs';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.join(__dirname, '.data', 'sessions');
+loadAppEnv();
+
 const PORT = Number(process.env.PORT || 8787);
-const DATABASE_URL = process.env.DATABASE_URL || '';
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000,https://fs-trading-sdk.onrender.com')
+const ALLOWED_ORIGINS = (
+  process.env.ALLOWED_ORIGINS ||
+  'http://localhost:3000,https://fs-trading-sdk.onrender.com'
+)
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
 
-let pool = null;
-
-async function getPool() {
-  if (!DATABASE_URL) return null;
-  if (pool) return pool;
-  const pg = await import('pg');
-  pool = new pg.default.Pool({
-    connectionString: DATABASE_URL,
-    ssl: DATABASE_URL.includes('render.com') ? { rejectUnauthorized: false } : undefined,
-  });
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS agent_sessions (
-      market_id TEXT PRIMARY KEY,
-      payload JSONB NOT NULL,
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    )
-  `);
-  return pool;
-}
-
-async function readSession(marketId) {
-  const db = await getPool();
-  if (db) {
-    const res = await db.query(
-      'SELECT payload, updated_at FROM agent_sessions WHERE market_id = $1',
-      [String(marketId)],
-    );
-    if (res.rowCount === 0) return null;
-    return {
-      session: res.rows[0].payload,
-      updatedAt: new Date(res.rows[0].updated_at).getTime(),
-    };
-  }
-  try {
-    const raw = await readFile(path.join(DATA_DIR, `${marketId}.json`), 'utf8');
-    const parsed = JSON.parse(raw);
-    if (parsed.session) return parsed;
-    return { session: parsed, updatedAt: parsed.updatedAt ?? Date.now() };
-  } catch {
-    return null;
-  }
-}
-
-async function writeSession(marketId, payload) {
-  const db = await getPool();
-  if (db) {
-    await db.query(
-      `INSERT INTO agent_sessions (market_id, payload, updated_at)
-       VALUES ($1, $2, now())
-       ON CONFLICT (market_id) DO UPDATE SET payload = $2, updated_at = now()`,
-      [String(marketId), payload],
-    );
-    return;
-  }
-  await mkdir(DATA_DIR, { recursive: true });
-  const envelope = { session: payload, updatedAt: Date.now() };
-  await writeFile(path.join(DATA_DIR, `${marketId}.json`), JSON.stringify(envelope, null, 0));
-}
-
-async function listSummaries() {
-  const db = await getPool();
-  if (db) {
-    const res = await db.query(
-      `SELECT market_id,
-              (payload->>'lastEstimate')::jsonb AS estimate,
-              updated_at
-       FROM agent_sessions
-       WHERE payload->'lastEstimate' IS NOT NULL`,
-    );
-    return res.rows.map((row) => ({
-      marketId: row.market_id,
-      changedMind: row.estimate?.changedMind === true,
-      updatedAt: new Date(row.updated_at).getTime(),
-      pointEstimate: row.estimate?.pointEstimate ?? null,
-      distributionType: row.estimate?.distributionType ?? null,
-    }));
-  }
-  const { readdir } = await import('node:fs/promises');
-  let files = [];
-  try {
-    files = await readdir(DATA_DIR);
-  } catch {
-    return [];
-  }
-  const out = [];
-  for (const f of files) {
-    if (!f.endsWith('.json')) continue;
-    const id = f.replace(/\.json$/, '');
-    const row = await readSession(id);
-    const session = row?.session;
-    if (!session?.lastEstimate) continue;
-    out.push({
-      marketId: id,
-      changedMind: session.lastEstimate.changedMind === true,
-      updatedAt: row.updatedAt ?? Date.now(),
-      pointEstimate: session.lastEstimate.pointEstimate ?? null,
-      distributionType: session.lastEstimate.distributionType ?? null,
-    });
-  }
-  return out;
-}
-
 function corsHeaders(origin) {
   const allowed = origin && ALLOWED_ORIGINS.includes(origin);
   const h = {
-    'Access-Control-Allow-Methods': 'GET, PUT, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET, PUT, POST, OPTIONS',
+    'Access-Control-Allow-Headers':
+      'Content-Type, x-api-key, anthropic-version, anthropic-dangerous-direct-browser-access',
   };
   if (allowed) {
     h['Access-Control-Allow-Origin'] = origin;
@@ -139,6 +48,12 @@ function send(res, status, body, headers = {}) {
   res.end(data);
 }
 
+async function readJsonBody(req) {
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+}
+
 const server = http.createServer(async (req, res) => {
   const origin = req.headers.origin || '';
   const baseHeaders = corsHeaders(origin);
@@ -151,14 +66,60 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url || '/', `http://${req.headers.host}`);
 
   try {
+    if (url.pathname.startsWith('/exa/')) {
+      if (!process.env.EXA_API_KEY?.trim()) {
+        send(res, 503, { error: 'EXA_API_KEY not configured on agent server' }, baseHeaders);
+        return;
+      }
+      await proxyToUpstream(req, res, baseHeaders, exaProxyConfig());
+      return;
+    }
+
+    if (url.pathname.startsWith('/claude/')) {
+      if (!process.env.ANTHROPIC_API_KEY?.trim()) {
+        send(
+          res,
+          503,
+          { error: 'ANTHROPIC_API_KEY not configured on agent server' },
+          baseHeaders,
+        );
+        return;
+      }
+      await proxyToUpstream(req, res, baseHeaders, claudeProxyConfig());
+      return;
+    }
+
     if (req.method === 'GET' && url.pathname === '/health') {
-      send(res, 200, { ok: true, storage: DATABASE_URL ? 'postgres' : 'file' }, baseHeaders);
+      send(res, 200, { ok: true, storage: storageMode() }, baseHeaders);
+      return;
+    }
+
+    if (req.method === 'GET' && url.pathname === '/stats') {
+      const stats = await getGlobalStats();
+      send(res, 200, { stats }, baseHeaders);
       return;
     }
 
     if (req.method === 'GET' && url.pathname === '/sessions') {
       const summaries = await listSummaries();
       send(res, 200, { summaries }, baseHeaders);
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/sessions/bulk') {
+      const body = await readJsonBody(req);
+      const sessions = Array.isArray(body.sessions) ? body.sessions : [];
+      const result = await bulkWriteSessions(sessions);
+      send(res, 200, { ok: true, ...result }, baseHeaders);
+      return;
+    }
+
+    const historyMatch = url.pathname.match(/^\/sessions\/([^/]+)\/forecasts$/);
+    if (historyMatch && req.method === 'GET') {
+      const marketId = decodeURIComponent(historyMatch[1]);
+      const limit = Number(url.searchParams.get('limit') || 30);
+      const forecasts = await listForecastHistory(marketId, limit);
+      send(res, 200, { forecasts }, baseHeaders);
       return;
     }
 
@@ -175,14 +136,16 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       if (req.method === 'PUT') {
-        const chunks = [];
-        for await (const chunk of req) chunks.push(chunk);
-        const body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+        const body = await readJsonBody(req);
         if (!body.session || String(body.session.marketId) !== String(marketId)) {
           send(res, 400, { error: 'invalid_session' }, baseHeaders);
           return;
         }
-        await writeSession(marketId, body.session);
+        await writeSession(marketId, body.session, {
+          newSourceCount: body.newSourceCount ?? 0,
+          skipped: body.skipped ?? false,
+          recordForecast: body.recordForecast !== false,
+        });
         send(res, 200, { ok: true }, baseHeaders);
         return;
       }
@@ -191,10 +154,15 @@ const server = http.createServer(async (req, res) => {
     send(res, 404, { error: 'not_found' }, baseHeaders);
   } catch (err) {
     console.error(err);
-    send(res, 500, { error: err instanceof Error ? err.message : String(err) }, baseHeaders);
+    send(
+      res,
+      500,
+      { error: err instanceof Error ? err.message : String(err) },
+      baseHeaders,
+    );
   }
 });
 
 server.listen(PORT, () => {
-  console.log(`agent cache API on :${PORT} (${DATABASE_URL ? 'postgres' : 'file'})`);
+  console.log(`Tycheprime Agent cache on :${PORT} (${storageMode()})`);
 });

@@ -1,6 +1,13 @@
+import { useEffect, useState } from 'react';
 import { useMarkets } from '@functionspace/react';
 import { MarketGrid } from '../agent/components/MarketGrid';
-import { MONO } from '../agent/theme'; // meta labels only
+import { MONO } from '../agent/theme';
+import {
+  fetchCacheStats,
+  isRemoteSessionEnabled,
+  syncAllLocalSessionsOnce,
+  type CacheStats,
+} from '../agent/remoteSession';
 
 export function MarketsHome() {
   const { markets, loading, error, refetch } = useMarkets({
@@ -9,6 +16,28 @@ export function MarketsHome() {
     sortOrder: 'desc',
     pollInterval: 60_000,
   });
+
+  const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
+  const [syncedCount, setSyncedCount] = useState(0);
+
+  useEffect(() => {
+    if (!isRemoteSessionEnabled()) return;
+    void (async () => {
+      const n = await syncAllLocalSessionsOnce();
+      if (n > 0) setSyncedCount(n);
+      const stats = await fetchCacheStats();
+      if (stats) setCacheStats(stats);
+    })();
+  }, []);
+
+  const metaLine = loading
+    ? 'Loading markets…'
+    : `${markets.length} open markets`;
+
+  const cacheLine =
+    cacheStats && cacheStats.marketsWithForecasts > 0
+      ? `${cacheStats.marketsWithForecasts} cached forecasts · ${cacheStats.totalForecasts} revisions in DB`
+      : null;
 
   return (
     <div className="fs-markets-page">
@@ -26,10 +55,19 @@ export function MarketsHome() {
             <li>Exa search every 20s; Claude runs only when new articles appear</li>
             <li>Gaussian, bimodal, range, and other shapes when the narrative fits</li>
             <li>Agent vs crowd consensus and hypothetical payout on the chart</li>
+            {isRemoteSessionEnabled() && (
+              <li>Forecasts sync to Postgres so new visitors skip cold starts</li>
+            )}
           </ul>
         </div>
         <div className="fs-markets-meta" style={{ fontFamily: MONO }}>
-          {loading ? 'Loading markets…' : `${markets.length} open markets`}
+          <div>{metaLine}</div>
+          {cacheLine && <div style={{ marginTop: 6, opacity: 0.85 }}>{cacheLine}</div>}
+          {syncedCount > 0 && (
+            <div style={{ marginTop: 4, color: 'var(--fs-positive)' }}>
+              Uploaded {syncedCount} local session{syncedCount === 1 ? '' : 's'} to database
+            </div>
+          )}
         </div>
       </header>
 

@@ -30,6 +30,18 @@ export function AgentPanel({ agent }: { agent: UseAgentResult }) {
   return (
     <Panel title="Agent Control">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {agent.loadedFromDb && (
+          <div
+            style={{
+              fontFamily: MONO,
+              fontSize: 11,
+              color: 'var(--fs-positive)',
+              letterSpacing: '0.04em',
+            }}
+          >
+            Latest forecast loaded from Postgres
+          </div>
+        )}
         {/* Estimate readout */}
         {estimate ? (
           <div>

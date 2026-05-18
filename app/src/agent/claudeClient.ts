@@ -1,11 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { agentApiUrl } from './agentApi';
 import type { AgentDistributionType, AgentEstimate, ExaResult } from './types';
 import { AGENT_DISTRIBUTION_TYPES } from './distributions';
 
 const claude = new Anthropic({
-  apiKey: 'injected-by-vite-proxy',
-  baseURL:
-    (typeof window !== 'undefined' ? window.location.origin : '') + '/claude',
+  apiKey: 'injected-by-proxy',
+  baseURL: agentApiUrl('/claude'),
   dangerouslyAllowBrowser: true,
   maxRetries: 1,
 });
@@ -239,7 +239,7 @@ async function runForecastTurn(
   } catch (err) {
     if (err instanceof Anthropic.AuthenticationError) {
       throw new Error(
-        'The Claude API rejected the request. Add a valid ANTHROPIC_API_KEY to app/.env.local and restart the dev server.',
+        'The Claude API rejected the request. Set ANTHROPIC_API_KEY on the agent server (local: app/.env.local; Render: cache web service env).',
       );
     }
     if (err instanceof Anthropic.APIError) {

@@ -47,6 +47,25 @@ export function createEmptySession(marketId: string | number): MarketAgentSessio
   };
 }
 
+const STORAGE_PREFIX_LEN = STORAGE_PREFIX.length;
+
+/** All per-market sessions stored in this browser (for bulk upload to Postgres). */
+export function listAllLocalSessions(): MarketAgentSession[] {
+  const out: MarketAgentSession[] = [];
+  try {
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      if (!key?.startsWith(STORAGE_PREFIX)) continue;
+      const marketId = key.slice(STORAGE_PREFIX_LEN);
+      const session = loadMarketSession(marketId);
+      if (session) out.push(session);
+    }
+  } catch {
+    // ignore
+  }
+  return out;
+}
+
 export function mergeSources(
   existing: ExaResult[],
   incoming: ExaResult[],

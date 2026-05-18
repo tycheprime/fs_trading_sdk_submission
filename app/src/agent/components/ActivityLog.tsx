@@ -8,9 +8,11 @@ import type { CycleRecord } from '../types';
 export function ActivityLog({
   cycles,
   units = '',
+  fromDatabase = false,
 }: {
   cycles: CycleRecord[];
   units?: string;
+  fromDatabase?: boolean;
 }) {
   return (
     <Panel
@@ -18,6 +20,7 @@ export function ActivityLog({
       right={
         <span style={{ fontFamily: MONO, fontSize: 11, color: 'var(--fs-text-secondary)' }}>
           {cycles.length} cycles
+          {fromDatabase ? ' · from DB' : ''}
         </span>
       }
       bodyStyle={{ padding: 0, overflowY: 'auto' }}

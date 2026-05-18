@@ -18,28 +18,43 @@ A multi-market forecaster on the [functionSPACE](https://ecosystem.functionspace
 
 Supported shapes: `gaussian`, `spike`, `range`, `bimodal`, `leftskew`, `rightskew`, `dip`, `uniform`.
 
-## Shared cache (optional)
+## Shared cache (Postgres)
 
-A small Node API (`app/server/index.mjs`) stores each market's session (sources, Claude messages, last forecast) in **Postgres** on Render or in JSON files locally.
+A small Node API (`app/server/index.mjs`) stores each market's session in **Render Postgres** (`agent_sessions`) and an append-only **forecast history** (`agent_forecasts`).
 
-- **Local:** `npm run server -w app` (port 8787, file storage under `app/server/.data/`)
-- **Production:** `render.yaml` defines `tycheprime-agent-cache` + free Postgres `tycheprime-agent-db`
-- **Frontend:** set `VITE_AGENT_CACHE_URL` (baked in at static build time on Render)
+- **Local:** add `DB_URL` (or `DB_*` fields) to `app/.env`, then `npm run server -w app` on port 8787
+- **Frontend:** `VITE_AGENT_CACHE_URL=/agent-cache` (Vite proxies to `VITE_AGENT_CACHE_TARGET=http://localhost:8787`)
+- **On first home visit:** any forecasts in `localStorage` are bulk-uploaded to Postgres once per browser
+- **On market open:** latest session + revision history load from DB before the first Exa poll (skips cold Claude when cache is fresh)
 
-New visitors hydrate from the cache before the first Exa poll, so they see prior forecasts without re-running Claude from scratch. After any cycle, the agent pushes updates to the cache.
+### API
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /health` | Postgres vs file storage |
+| `GET /sessions` | Summaries for the markets grid |
+| `GET /sessions/:id` | Latest session (sources, messages, forecast) |
+| `PUT /sessions/:id` | Save session; records forecast revisions |
+| `POST /sessions/bulk` | Import many sessions (localStorage backfill) |
+| `GET /sessions/:id/forecasts` | Revision history for the cycle log |
+| `GET /stats` | Global counts (markets cached, total revisions) |
 
 ## Setup
 
 ```bash
-# app/.env.local
+# app/.env.local — API keys
 EXA_API_KEY=...
 ANTHROPIC_API_KEY=...
 VITE_FS_BASE_URL=...
-VITE_AGENT_CACHE_URL=http://localhost:8787   # optional
+
+# app/.env — Postgres (from Render dashboard)
+DB_URL=postgresql://...
+VITE_AGENT_CACHE_URL=/agent-cache
+VITE_AGENT_CACHE_TARGET=http://localhost:8787
 ```
 
 ```bash
-# Terminal 1 — cache API
+# Terminal 1 — cache API (needs DB_URL)
 npm run server -w app
 
 # Terminal 2 — UI
@@ -54,4 +69,10 @@ Open http://localhost:3000
 2. On the static site `tycheprime-agent`, set `VITE_AGENT_CACHE_URL` to the cache service URL (e.g. `https://tycheprime-agent-cache.onrender.com`) and redeploy so the bundle includes it.
 3. Set `ALLOWED_ORIGINS` on the cache service to include your static site URL.
 
-Exa and Claude still need server-side proxies for production (static sites cannot hold API keys). Local dev uses Vite proxies in `vite.config.ts`.
+Exa and Claude are proxied by the **cache web service** (`/exa/*`, `/claude/*`) with keys in `EXA_API_KEY` and `ANTHROPIC_API_KEY` (never in the static bundle). Local dev uses Vite proxies in `vite.config.ts`.
+
+On Render:
+
+1. Deploy **tycheprime-agent-cache** (Node) and set `EXA_API_KEY`, `ANTHROPIC_API_KEY`, and Postgres `DATABASE_URL`.
+2. On the static site, set `VITE_AGENT_CACHE_URL` to the cache service URL and redeploy (baked into the JS bundle).
+3. Optional: add static **rewrite** rules so `/exa/*` and `/claude/*` hit the cache service when `VITE_AGENT_CACHE_URL` is unset (see `render.yaml`).

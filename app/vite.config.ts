@@ -7,8 +7,12 @@ import path from 'path';
 // Keys are read from app/.env.local (gitignored). See README_AGENT.md.
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
+  const agentCacheUrl = env.VITE_AGENT_CACHE_URL || '/agent-cache';
 
   return {
+    define: {
+      'import.meta.env.VITE_AGENT_CACHE_URL': JSON.stringify(agentCacheUrl),
+    },
     plugins: [react()],
     server: {
       port: 3000,
@@ -43,7 +47,7 @@ export default defineConfig(({ mode }) => {
           },
         },
         '/agent-cache': {
-          target: env.VITE_AGENT_CACHE_URL || 'http://localhost:8787',
+          target: env.VITE_AGENT_CACHE_TARGET || 'http://localhost:8787',
           changeOrigin: true,
           rewrite: (p) => p.replace(/^\/agent-cache/, ''),
         },

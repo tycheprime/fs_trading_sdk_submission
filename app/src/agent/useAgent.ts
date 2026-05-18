@@ -10,6 +10,7 @@ import { loadMarketSession, mergeSources } from './marketSession';
 import {
   getOrCreateSession,
   hydrateMarketSession,
+  loadRemoteCycleHistory,
   persistMarketSession,
 } from './sessionSync';
 import { isRemoteSessionEnabled } from './remoteSession';
@@ -40,6 +41,7 @@ export interface UseAgentResult {
   setIntervalSec: (s: number) => void;
   secondsUntilNext: number | null;
   runCycleNow: () => void;
+  loadedFromDb: boolean;
   busy: boolean;
 }
 
@@ -61,6 +63,7 @@ export function useAgent(marketId: string | number): UseAgentResult {
   const [nextRunAt, setNextRunAt] = useState<number | null>(Date.now());
   const [now, setNow] = useState(Date.now());
   const [cacheReady, setCacheReady] = useState(() => !isRemoteSessionEnabled());
+  const [loadedFromDb, setLoadedFromDb] = useState(false);
 
   const runningRef = useRef(false);
   const cycleCounter = useRef(0);
@@ -105,7 +108,7 @@ export function useAgent(marketId: string | number): UseAgentResult {
       record = { ...record, sources: merged, newSourceCount: added.length };
 
       if (added.length === 0 && session.lastEstimate) {
-        persistMarketSession(session);
+        persistMarketSession(session, { newSourceCount: 0, skipped: true });
         record = {
           ...record,
           skipped: true,
@@ -161,7 +164,10 @@ export function useAgent(marketId: string | number): UseAgentResult {
       record = { ...record, beliefBuild };
       setBeliefBuild(beliefBuild);
 
-        persistMarketSession(session);
+        persistMarketSession(session, {
+          newSourceCount: added.length,
+          skipped: false,
+        });
         record = { ...record, finishedAt: Date.now() };
         setStatus('idle');
       }
@@ -207,10 +213,19 @@ export function useAgent(marketId: string | number): UseAgentResult {
     }
 
     setCacheReady(false);
-    void hydrateMarketSession(marketId).then((session) => {
+    void (async () => {
+      const session = await hydrateMarketSession(marketId);
       applySession(session);
+      const history = await loadRemoteCycleHistory(
+        marketId,
+        session?.sources.length ?? 0,
+      );
+      if (!cancelled && history.length > 0) {
+        setCycles(history);
+        setLoadedFromDb(true);
+      }
       if (!cancelled) setCacheReady(true);
-    });
+    })();
 
     return () => {
       cancelled = true;
@@ -263,6 +278,7 @@ export function useAgent(marketId: string | number): UseAgentResult {
     setIntervalSec,
     secondsUntilNext,
     runCycleNow,
+    loadedFromDb,
     busy:
       status === 'searching' ||
       status === 'thinking' ||

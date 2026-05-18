@@ -1,3 +1,4 @@
+import { agentApiUrl } from './agentApi';
 import type { ExaResult } from './types';
 
 export async function searchMarketNews(
@@ -10,7 +11,7 @@ export async function searchMarketNews(
 
   const query = `Latest news, data, and expert forecasts about: ${marketTitle}. Focus on information relevant to predicting the market outcome.`;
 
-  const res = await fetch('/exa/search', {
+  const res = await fetch(agentApiUrl('/exa/search'), {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     signal,
@@ -27,7 +28,7 @@ export async function searchMarketNews(
     const body = await res.text();
     if (res.status === 401 || res.status === 403) {
       throw new Error(
-        'exa.ai rejected the request. Add a valid EXA_API_KEY to app/.env.local and restart the dev server.',
+        'exa.ai rejected the request. Set EXA_API_KEY on the agent server (local: app/.env.local; Render: cache web service env).',
       );
     }
     throw new Error(`exa.ai search failed (${res.status}): ${body.slice(0, 200)}`);

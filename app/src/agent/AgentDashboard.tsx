@@ -92,7 +92,11 @@ export function AgentDashboard({ marketId }: { marketId: string | number }) {
               </div>
             )}
           </Panel>
-          <ActivityLog cycles={agent.cycles} units={units} />
+          <ActivityLog
+            cycles={agent.cycles}
+            units={units}
+            fromDatabase={agent.loadedFromDb}
+          />
         </div>
 
         <div
