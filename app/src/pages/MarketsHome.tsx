@@ -52,7 +52,7 @@ export function MarketsHome() {
             placing a trade.
           </p>
           <ul className="fs-markets-bullets">
-            <li>Exa search every 20s; Claude runs only when new articles appear</li>
+            <li>Exa search every 5 minutes; Claude runs only when new articles appear</li>
             <li>Gaussian, bimodal, range, and other shapes when the narrative fits</li>
             <li>Agent vs crowd consensus and hypothetical payout on the chart</li>
             {isRemoteSessionEnabled() && (

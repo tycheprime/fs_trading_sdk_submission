@@ -23,7 +23,7 @@ import type {
 } from './types';
 
 const MAX_HISTORY = 30;
-const DEFAULT_POLL_SEC = 20;
+const DEFAULT_POLL_SEC = 300; // 5 minutes between Exa searches
 
 export interface UseAgentResult {
   status: AgentStatus;

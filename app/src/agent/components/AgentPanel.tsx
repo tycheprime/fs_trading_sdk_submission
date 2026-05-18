@@ -12,6 +12,15 @@ const CONFIDENCE_COLOR: Record<string, string> = {
   high: 'var(--fs-positive)',
 };
 
+function formatCountdown(seconds: number): string {
+  if (seconds >= 60) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return s > 0 ? `${m}m ${s}s` : `${m}m`;
+  }
+  return `${seconds}s`;
+}
+
 const labelStyle: CSSProperties = {
   fontFamily: MONO,
   fontSize: 10,
@@ -147,7 +156,7 @@ export function AgentPanel({ agent }: { agent: UseAgentResult }) {
               padding: '8px 0',
             }}
           >
-            Waiting for first forecast. Auto-cycle runs exa every 20s and
+            Waiting for first forecast. Auto-cycle runs exa every 5 minutes and
             calls Claude only when new articles appear.
           </div>
         )}
@@ -158,8 +167,10 @@ export function AgentPanel({ agent }: { agent: UseAgentResult }) {
             label="Auto-cycle"
             hint={
               agent.autoMode && agent.secondsUntilNext != null
-                ? `next cycle in ${agent.secondsUntilNext}s`
-                : `exa search every ${agent.intervalSec}s`
+                ? `next cycle in ${formatCountdown(agent.secondsUntilNext)}`
+                : agent.intervalSec >= 60
+                  ? `exa search every ${agent.intervalSec / 60} min`
+                  : `exa search every ${agent.intervalSec}s`
             }
             on={agent.autoMode}
             onChange={agent.setAutoMode}
@@ -169,8 +180,8 @@ export function AgentPanel({ agent }: { agent: UseAgentResult }) {
             label="Cycle interval"
             suffix="sec"
             value={agent.intervalSec}
-            min={20}
-            step={10}
+            min={60}
+            step={60}
             onChange={agent.setIntervalSec}
           />
         </div>
