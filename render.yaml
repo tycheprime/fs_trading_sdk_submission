@@ -25,6 +25,8 @@ services:
         sync: false
       - key: AGENT_API_SECRET
         sync: false
+      - key: FS_ENGINE_API_URL
+        value: "https://fs-engine-api.onrender.com"
 
   - type: web
     name: tycheprime-agent
@@ -36,7 +38,7 @@ services:
       - key: NODE_VERSION
         value: "20"
       - key: VITE_FS_BASE_URL
-        value: "https://fs-engine-api.onrender.com"
+        value: "/fs-api"
       - key: VITE_AGENT_CACHE_URL
         fromService:
           type: web
@@ -45,6 +47,9 @@ services:
       - key: VITE_AGENT_API_SECRET
         sync: false
     routes:
+      - type: rewrite
+        source: /fs-api/*
+        destination: https://tycheprime-agent-cache.onrender.com/fs-api/*
       - type: rewrite
         source: /exa/*
         destination: https://tycheprime-agent-cache.onrender.com/exa/*

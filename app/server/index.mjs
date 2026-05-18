@@ -14,6 +14,7 @@ import {
 import {
   claudeProxyConfig,
   exaProxyConfig,
+  fsEngineProxyConfig,
   proxyToUpstream,
 } from './proxy.mjs';
 import { agentLog } from './log.mjs';
@@ -126,6 +127,11 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       await proxyToUpstream(req, res, baseHeaders, claudeProxyConfig());
+      return;
+    }
+
+    if (url.pathname.startsWith('/fs-api/')) {
+      await proxyToUpstream(req, res, baseHeaders, fsEngineProxyConfig());
       return;
     }
 

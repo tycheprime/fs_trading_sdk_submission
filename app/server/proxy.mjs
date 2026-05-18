@@ -166,3 +166,18 @@ export function claudeProxyConfig() {
     },
   };
 }
+
+/** functionSPACE engine API — browser calls agent server to avoid CORS on fs-engine-api. */
+export function fsEngineProxyConfig() {
+  const base = (process.env.FS_ENGINE_API_URL || 'https://fs-engine-api.onrender.com').trim();
+  const upstream = new URL(base);
+  return {
+    label: 'fs-engine',
+    hostname: upstream.hostname,
+    mapPath: (pathname, search) => {
+      const path = pathname.replace(/^\/fs-api/, '') || '/';
+      return `${path}${search}`;
+    },
+    extraHeaders: () => ({}),
+  };
+}

@@ -87,7 +87,10 @@ export class FSClient {
   }
 
   private buildUrl(path: string, params?: Record<string, string>): string {
-    const url = new URL(path, this.baseUrl);
+    // Join base path prefix (e.g. https://host/fs-api/) with API paths (/api/...).
+    const base = this.baseUrl.endsWith('/') ? this.baseUrl : `${this.baseUrl}/`;
+    const relative = path.startsWith('/') ? path.slice(1) : path;
+    const url = new URL(relative, base);
     if (params) {
       for (const [key, value] of Object.entries(params)) {
         url.searchParams.set(key, value);

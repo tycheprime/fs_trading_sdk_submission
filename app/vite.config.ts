@@ -60,6 +60,11 @@ export default defineConfig(({ mode }) => {
             });
           },
         },
+        // functionSPACE engine: same path as production Render rewrite (/fs-api → agent server).
+        '/fs-api': {
+          target: env.VITE_AGENT_CACHE_TARGET || 'http://localhost:8787',
+          changeOrigin: true,
+        },
       },
     },
     resolve: {
