@@ -1,6 +1,8 @@
 import { computeStatistics } from '@functionspace/core';
 import type { MarketState } from '@functionspace/core';
+import { l1DensityDistance, probAboveThreshold, summarizeBelief } from './chartStats';
 import { DISTRIBUTION_LABELS } from './distributions';
+import { formatProb } from './format';
 import type { AgentEstimate, BeliefBuild } from './types';
 
 export interface CrowdComparison {
@@ -11,6 +13,10 @@ export interface CrowdComparison {
   agentShapeLabel: string;
   alignment: 'aligned' | 'above' | 'below';
   divergence: 'low' | 'medium' | 'high';
+  l1Distance: number | null;
+  pAgentAboveCrowdMean: number | null;
+  crowdStdDev: number;
+  agentStdDev: number;
   headline: string;
   detail: string;
 }
@@ -65,10 +71,26 @@ export function compareAgentToCrowd(
 
   const pctStr =
     deltaPct != null
-      ? `${deltaPct >= 0 ? '+' : ''}${deltaPct.toFixed(1)}% vs consensus mean`
-      : `${delta >= 0 ? '+' : ''}${Math.round(delta).toLocaleString()} vs consensus`;
+      ? `${deltaPct >= 0 ? '+' : ''}${deltaPct.toFixed(1)}% vs μ_crowd`
+      : `${delta >= 0 ? '+' : ''}${Math.round(delta).toLocaleString()} vs μ_crowd`;
 
-  const detail = `${shapeNote} ${pctStr}.`;
+  const { lowerBound, upperBound } = market.config;
+  const crowd = summarizeBelief(market.consensus, lowerBound, upperBound);
+  const agentStats = summarizeBelief(build.belief, lowerBound, upperBound);
+  const l1 = l1DensityDistance(
+    market.consensus,
+    build.belief,
+    lowerBound,
+    upperBound,
+  );
+  const pAbove = probAboveThreshold(
+    build.belief,
+    consensusMean,
+    lowerBound,
+    upperBound,
+  );
+
+  const detail = `${shapeNote} Δμ: ${pctStr}. L₁=${l1.toFixed(4)}, P(x>μ_crowd)=${formatProb(pAbove)}.`;
 
   return {
     consensusMean,
@@ -78,6 +100,10 @@ export function compareAgentToCrowd(
     agentShapeLabel,
     alignment,
     divergence,
+    l1Distance: l1,
+    pAgentAboveCrowdMean: pAbove,
+    crowdStdDev: crowd.stdDev,
+    agentStdDev: agentStats.stdDev,
     headline,
     detail,
   };

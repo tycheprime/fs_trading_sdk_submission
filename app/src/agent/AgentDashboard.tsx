@@ -8,10 +8,10 @@ import { AgentPanel } from './components/AgentPanel';
 import { ActivityLog } from './components/ActivityLog';
 import { SourcesPanel } from './components/SourcesPanel';
 import { AgentVsCrowdPanel } from './components/AgentVsCrowdPanel';
-import { PayoutPreviewPanel } from './components/PayoutPreviewPanel';
 import {
   CycleReplaySelect,
   resolveChartBeliefBuild,
+  resolveChartEstimate,
 } from './components/CycleReplaySelect';
 
 // The full agent terminal: header, distribution chart + cycle log on the
@@ -23,6 +23,11 @@ export function AgentDashboard({ marketId }: { marketId: string | number }) {
   const chartBeliefBuild = useMemo(
     () => resolveChartBeliefBuild(agent.beliefBuild, agent.cycles, replayCycleId),
     [agent.beliefBuild, agent.cycles, replayCycleId],
+  );
+
+  const chartEstimate = useMemo(
+    () => resolveChartEstimate(agent.forecast, agent.cycles, replayCycleId),
+    [agent.forecast, agent.cycles, replayCycleId],
   );
 
   const units = agent.market?.xAxisUnits ?? '';
@@ -60,8 +65,8 @@ export function AgentDashboard({ marketId }: { marketId: string | number }) {
           <Panel
             title={
               agent.market
-                ? `Probability Distribution — ${agent.market.title}`
-                : 'Probability Distribution'
+                ? `Belief density f(x) — ${agent.market.title}`
+                : 'Belief density f(x)'
             }
             right={
               <CycleReplaySelect
@@ -75,6 +80,7 @@ export function AgentDashboard({ marketId }: { marketId: string | number }) {
               <MarketChart
                 market={agent.market}
                 beliefBuild={chartBeliefBuild}
+                estimate={chartEstimate}
               />
             ) : (
               <div
@@ -115,11 +121,6 @@ export function AgentDashboard({ marketId }: { marketId: string | number }) {
             beliefBuild={agent.beliefBuild}
           />
           <AgentPanel agent={agent} />
-          <PayoutPreviewPanel
-            marketId={marketId}
-            beliefBuild={agent.beliefBuild}
-            units={units}
-          />
           <SourcesPanel sources={agent.allSources} />
         </div>
       </main>

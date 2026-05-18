@@ -2,7 +2,6 @@ import { useContext, useMemo } from 'react';
 import { FunctionSpaceContext } from '@functionspace/react';
 import {
   evaluateDensityCurve,
-  computeStatistics,
   computePercentiles,
 } from '@functionspace/core';
 import type { MarketState } from '@functionspace/core';
@@ -15,23 +14,28 @@ import {
   CartesianGrid,
   Tooltip,
   ReferenceLine,
+  ReferenceArea,
   ResponsiveContainer,
 } from 'recharts';
-import type { BeliefBuild } from '../types';
+import type { AgentEstimate, BeliefBuild } from '../types';
+import {
+  l1DensityDistance,
+  probAboveThreshold,
+  summarizeBelief,
+  type DistributionSummary,
+} from '../chartStats';
 import { MONO } from '../theme';
-import { formatOutcome, formatUsdShort } from '../format';
+import { formatDensity, formatOutcome, formatProb, formatUsdShort } from '../format';
 
 const POINTS = 200;
 
 interface MarketChartProps {
   market: MarketState;
   beliefBuild: BeliefBuild | null;
+  estimate: AgentEstimate | null;
 }
 
-// Custom probability-density chart: the live market consensus, with the
-// agent's target belief overlaid. Both curves are evaluated by the SDK's
-// core math (evaluateDensityCurve) -- the component only renders.
-export function MarketChart({ market, beliefBuild }: MarketChartProps) {
+export function MarketChart({ market, beliefBuild, estimate }: MarketChartProps) {
   const ctx = useContext(FunctionSpaceContext);
   const colors = ctx?.chartColors;
   const { lowerBound, upperBound } = market.config;
@@ -47,63 +51,55 @@ export function MarketChart({ market, beliefBuild }: MarketChartProps) {
     ? evaluateDensityCurve(beliefBuild.belief, lowerBound, upperBound, POINTS)
     : null;
 
-  const previewPayout = ctx?.previewPayout;
-
-  const data = useMemo(() => {
-    const points = consensusCurve.map((p, i) => ({
-      x: p.x,
-      consensus: p.y,
-      agent: agentCurve ? (agentCurve[i]?.y ?? null) : null,
-      payout: undefined as number | undefined,
-    }));
-
-    if (previewPayout?.previews?.length) {
-      const previews = previewPayout.previews;
-      const step =
-        (upperBound - lowerBound) / (market.config.numBuckets || 50);
-      for (const point of points) {
-        let best = previews[0];
-        let bestDist = Math.abs(best.outcome - point.x);
-        for (let j = 1; j < previews.length; j++) {
-          const dist = Math.abs(previews[j].outcome - point.x);
-          if (dist < bestDist) {
-            best = previews[j];
-            bestDist = dist;
-          }
-        }
-        if (bestDist < step * 2) {
-          point.payout = best.payout;
-        }
-      }
-    }
-
-    return points;
-  }, [
-    consensusCurve,
-    agentCurve,
-    previewPayout,
-    lowerBound,
-    upperBound,
-    market.config.numBuckets,
-  ]);
-
-  const consensusStats = computeStatistics(
-    market.consensus,
-    lowerBound,
-    upperBound,
+  const crowd = useMemo(
+    () => summarizeBelief(market.consensus, lowerBound, upperBound),
+    [market.consensus, lowerBound, upperBound],
   );
-  const consensusMean = Number.isFinite(market.consensusMean)
-    ? market.consensusMean
-    : consensusStats.mean;
 
-  // Crop the x domain to where the probability mass actually sits, so the
-  // distribution is readable instead of a thin spike across 0-200k.
+  const agentSummary = useMemo(() => {
+    if (!beliefBuild) return null;
+    return summarizeBelief(beliefBuild.belief, lowerBound, upperBound);
+  }, [beliefBuild, lowerBound, upperBound]);
+
+  const divergence = useMemo(() => {
+    if (!beliefBuild) return null;
+    return {
+      l1: l1DensityDistance(
+        market.consensus,
+        beliefBuild.belief,
+        lowerBound,
+        upperBound,
+        POINTS,
+      ),
+      pAboveCrowdMean: probAboveThreshold(
+        beliefBuild.belief,
+        crowd.mean,
+        lowerBound,
+        upperBound,
+      ),
+    };
+  }, [beliefBuild, market.consensus, crowd.mean, lowerBound, upperBound]);
+
+  const data = useMemo(
+    () =>
+      consensusCurve.map((p, i) => ({
+        x: p.x,
+        consensus: p.y,
+        agent: agentCurve ? (agentCurve[i]?.y ?? null) : null,
+      })),
+    [consensusCurve, agentCurve],
+  );
+
   const pct = computePercentiles(market.consensus, lowerBound, upperBound);
   let lo = pct.p2_5;
   let hi = pct.p97_5;
   if (beliefBuild) {
     lo = Math.min(lo, beliefBuild.center - 2 * beliefBuild.spread);
     hi = Math.max(hi, beliefBuild.center + 2 * beliefBuild.spread);
+  }
+  if (estimate) {
+    lo = Math.min(lo, estimate.low);
+    hi = Math.max(hi, estimate.high);
   }
   const pad = (hi - lo) * 0.08 || 1000;
   lo = Math.max(lowerBound, lo - pad);
@@ -115,110 +111,144 @@ export function MarketChart({ market, beliefBuild }: MarketChartProps) {
   const axisColor = colors?.axisText ?? '#8b949e';
 
   return (
-    <div>
-      {/* Legend */}
+    <div className="fs-density-chart">
       <div
         style={{
           display: 'flex',
           gap: 18,
           flexWrap: 'wrap',
           fontFamily: MONO,
-          fontSize: 11,
+          fontSize: 10,
           color: 'var(--fs-text-secondary)',
           marginBottom: 6,
+          letterSpacing: '0.04em',
+          textTransform: 'uppercase',
         }}
       >
-        <LegendItem color={consensusColor} label="Market consensus" />
-        <LegendItem color={agentColor} label="Agent target belief" dashed />
-        <span>
-          consensus mean{' '}
-          <strong style={{ color: 'var(--fs-text)' }}>
-            {formatOutcome(consensusMean, units)}
-          </strong>
-        </span>
+        <LegendItem color={consensusColor} label="π_crowd(x)" />
         {beliefBuild && (
-          <span>
-            agent center{' '}
-            <strong style={{ color: agentColor }}>
-              {formatOutcome(beliefBuild.center, units)}
-              {beliefBuild.label ? ` (${beliefBuild.label})` : ''}
-            </strong>
-          </span>
+          <LegendItem color={agentColor} label="π_agent(x)" dashed />
+        )}
+        <LegendItem color={consensusColor} label="IQR crowd" box />
+        {estimate && (
+          <LegendItem color={agentColor} label="agent 90% band" box dashed />
         )}
       </div>
 
-      <div style={{ height: 320 }}>
+      <div style={{ height: 340 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 8, right: 12, bottom: 4, left: 8 }}>
+          <ComposedChart
+            data={data}
+            margin={{ top: 10, right: 14, bottom: 20, left: 4 }}
+          >
             <defs>
               <linearGradient id="fsConsensusFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={consensusColor} stopOpacity={0.28} />
+                <stop offset="0%" stopColor={consensusColor} stopOpacity={0.22} />
                 <stop offset="100%" stopColor={consensusColor} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid stroke={gridColor} strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid
+              stroke={gridColor}
+              strokeDasharray="2 4"
+              vertical
+              horizontal
+            />
             <XAxis
               dataKey="x"
               type="number"
               domain={[lo, hi]}
               tickFormatter={(v: number) => formatUsdShort(v)}
-              tick={{ fill: axisColor, fontSize: 11, fontFamily: MONO }}
+              tick={{ fill: axisColor, fontSize: 10, fontFamily: MONO }}
               stroke={gridColor}
-            />
-            <YAxis hide domain={[0, 'auto']} />
-            <Tooltip
-              contentStyle={{
-                background: 'var(--fs-surface)',
-                border: '1px solid var(--fs-border)',
-                borderRadius: 6,
+              label={{
+                value: `outcome x (${units || 'units'})`,
+                position: 'insideBottom',
+                offset: -8,
+                fill: axisColor,
+                fontSize: 10,
                 fontFamily: MONO,
-                fontSize: 12,
               }}
+            />
+            <YAxis
+              tickFormatter={(v: number) => formatDensity(v)}
+              tick={{ fill: axisColor, fontSize: 10, fontFamily: MONO }}
+              stroke={gridColor}
+              width={56}
+              label={{
+                value: 'f(x)',
+                angle: -90,
+                position: 'insideLeft',
+                fill: axisColor,
+                fontSize: 10,
+                fontFamily: MONO,
+              }}
+            />
+            <Tooltip
               content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null;
                 const row = payload[0]?.payload as {
                   consensus?: number;
                   agent?: number | null;
-                  payout?: number;
                 };
                 return (
-                  <div
-                    style={{
-                      background: 'var(--fs-surface)',
-                      border: '1px solid var(--fs-border)',
-                      borderRadius: 6,
-                      padding: '8px 10px',
-                      fontFamily: MONO,
-                      fontSize: 12,
-                    }}
-                  >
-                    <div style={{ marginBottom: 6, color: 'var(--fs-text)' }}>
-                      {formatOutcome(Number(label), units)}
+                  <div className="fs-chart-tooltip">
+                    <div className="fs-chart-tooltip-x">
+                      x = {formatOutcome(Number(label), units)}
                     </div>
                     {row?.consensus != null && (
                       <div style={{ color: consensusColor }}>
-                        consensus: {row.consensus.toFixed(5)}
+                        π_crowd = {formatDensity(row.consensus)}
                       </div>
                     )}
                     {row?.agent != null && (
                       <div style={{ color: agentColor }}>
-                        agent: {row.agent.toFixed(5)}
-                      </div>
-                    )}
-                    {row?.payout != null && (
-                      <div style={{ color: 'var(--fs-positive)', marginTop: 4 }}>
-                        preview payout: {formatUsdShort(row.payout)}
+                        π_agent = {formatDensity(row.agent)}
                       </div>
                     )}
                   </div>
                 );
               }}
             />
+            <ReferenceArea
+              x1={crowd.p25}
+              x2={crowd.p75}
+              fill={consensusColor}
+              fillOpacity={0.1}
+              strokeOpacity={0}
+            />
+            {estimate && (
+              <ReferenceArea
+                x1={estimate.low}
+                x2={estimate.high}
+                fill={agentColor}
+                fillOpacity={0.08}
+                stroke={agentColor}
+                strokeOpacity={0.35}
+                strokeDasharray="4 3"
+              />
+            )}
+            <ReferenceLine
+              x={crowd.p2_5}
+              stroke={consensusColor}
+              strokeDasharray="2 3"
+              strokeOpacity={0.35}
+            />
+            <ReferenceLine
+              x={crowd.p97_5}
+              stroke={consensusColor}
+              strokeDasharray="2 3"
+              strokeOpacity={0.35}
+            />
+            <ReferenceLine
+              x={crowd.median}
+              stroke={consensusColor}
+              strokeOpacity={0.5}
+            />
             <Area
               type="monotone"
               dataKey="consensus"
               stroke={consensusColor}
-              strokeWidth={2}
+              strokeWidth={1.5}
               fill="url(#fsConsensusFill)"
               isAnimationActive={false}
               dot={false}
@@ -227,23 +257,123 @@ export function MarketChart({ market, beliefBuild }: MarketChartProps) {
               type="monotone"
               dataKey="agent"
               stroke={agentColor}
-              strokeWidth={2.5}
-              strokeDasharray="6 4"
+              strokeWidth={2}
+              strokeDasharray="5 3"
               dot={false}
               connectNulls
               isAnimationActive={false}
             />
-            <ReferenceLine x={consensusMean} stroke={consensusColor} strokeOpacity={0.55} />
             {beliefBuild && (
               <ReferenceLine
                 x={beliefBuild.center}
                 stroke={agentColor}
-                strokeDasharray="4 3"
+                strokeDasharray="4 2"
               />
             )}
           </ComposedChart>
         </ResponsiveContainer>
       </div>
+
+      <StatsTable
+        units={units}
+        crowd={crowd}
+        agent={agentSummary}
+        estimate={estimate}
+        divergence={divergence}
+        consensusColor={consensusColor}
+        agentColor={agentColor}
+      />
+    </div>
+  );
+}
+
+function StatsTable({
+  units,
+  crowd,
+  agent,
+  estimate,
+  divergence,
+  consensusColor,
+  agentColor,
+}: {
+  units: string;
+  crowd: DistributionSummary;
+  agent: DistributionSummary | null;
+  estimate: AgentEstimate | null;
+  divergence: { l1: number; pAboveCrowdMean: number } | null;
+  consensusColor: string;
+  agentColor: string;
+}) {
+  return (
+    <div className="fs-density-stats">
+      <div className="fs-density-stats-head">
+        <span style={{ color: consensusColor }}>Crowd π(x)</span>
+        {agent && <span style={{ color: agentColor }}>Agent π(x)</span>}
+      </div>
+      <StatRow
+        label="μ (mean)"
+        crowd={formatOutcome(crowd.mean, units)}
+        agent={agent ? formatOutcome(agent.mean, units) : '—'}
+      />
+      <StatRow
+        label="σ (std dev)"
+        crowd={formatOutcome(crowd.stdDev, units)}
+        agent={agent ? formatOutcome(agent.stdDev, units) : '—'}
+      />
+      <StatRow
+        label="p50 (median)"
+        crowd={formatOutcome(crowd.median, units)}
+        agent={agent ? formatOutcome(agent.median, units) : '—'}
+      />
+      <StatRow
+        label="90% HDI"
+        crowd={`[${formatOutcome(crowd.p2_5, units)}, ${formatOutcome(crowd.p97_5, units)}]`}
+        agent={
+          agent
+            ? `[${formatOutcome(agent.p2_5, units)}, ${formatOutcome(agent.p97_5, units)}]`
+            : '—'
+        }
+      />
+      <StatRow
+        label="IQR"
+        crowd={`[${formatOutcome(crowd.p25, units)}, ${formatOutcome(crowd.p75, units)}]`}
+        agent={
+          agent
+            ? `[${formatOutcome(agent.p25, units)}, ${formatOutcome(agent.p75, units)}]`
+            : '—'
+        }
+      />
+      {estimate && (
+        <StatRow
+          label="stated 90% CI"
+          crowd="—"
+          agent={`[${formatOutcome(estimate.low, units)}, ${formatOutcome(estimate.high, units)}]`}
+        />
+      )}
+      {divergence && (
+        <div className="fs-density-divergence">
+          L₁(π_agent, π_crowd) = {divergence.l1.toFixed(4)} · P_agent(x {'>'} μ_crowd) ={' '}
+          {formatProb(divergence.pAboveCrowdMean)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StatRow({
+  label,
+  crowd,
+  agent,
+}: {
+  label: string;
+  crowd: string;
+  agent: string;
+}) {
+  return (
+    <div className="fs-density-stat-row">
+      <span className="fs-density-stat-label">{label}</span>
+      <span className="fs-density-stat-val">{crowd}</span>
+      <span className="fs-density-stat-val">{agent}</span>
     </div>
   );
 }
@@ -252,20 +382,34 @@ function LegendItem({
   color,
   label,
   dashed,
+  box,
 }: {
   color: string;
   label: string;
   dashed?: boolean;
+  box?: boolean;
 }) {
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-      <span
-        style={{
-          width: 16,
-          height: 0,
-          borderTop: `3px ${dashed ? 'dashed' : 'solid'} ${color}`,
-        }}
-      />
+      {box ? (
+        <span
+          style={{
+            width: 12,
+            height: 10,
+            background: color,
+            opacity: 0.25,
+            border: `1px ${dashed ? 'dashed' : 'solid'} ${color}`,
+          }}
+        />
+      ) : (
+        <span
+          style={{
+            width: 16,
+            height: 0,
+            borderTop: `2px ${dashed ? 'dashed' : 'solid'} ${color}`,
+          }}
+        />
+      )}
       {label}
     </span>
   );

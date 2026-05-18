@@ -28,7 +28,7 @@ export type { UseBuyReturn } from './useBuy.js';
 export { useSell } from './useSell.js';
 export type { UseSellReturn } from './useSell.js';
 export { usePreviewPayout } from './usePreviewPayout.js';
-export type { UsePreviewPayoutReturn } from './usePreviewPayout.js';
+export type { UsePreviewPayoutReturn, UsePreviewPayoutOptions } from './usePreviewPayout.js';
 export { usePreviewSell } from './usePreviewSell.js';
 export type { UsePreviewSellReturn } from './usePreviewSell.js';
 export { useMarketFilters } from './useMarketFilters.js';

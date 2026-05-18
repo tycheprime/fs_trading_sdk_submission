@@ -11,7 +11,15 @@ export interface UsePreviewPayoutReturn {
   reset: () => void;
 }
 
-export function usePreviewPayout(marketId: string | number): UsePreviewPayoutReturn {
+export interface UsePreviewPayoutOptions {
+  /** When set, skips reading numBuckets from the market query cache (avoids race on first load). */
+  numBuckets?: number;
+}
+
+export function usePreviewPayout(
+  marketId: string | number,
+  options?: UsePreviewPayoutOptions,
+): UsePreviewPayoutReturn {
   const ctx = useContext(FunctionSpaceContext);
   if (!ctx) throw new Error('usePreviewPayout must be used within FunctionSpaceProvider');
 
@@ -45,9 +53,12 @@ export function usePreviewPayout(marketId: string | number): UsePreviewPayoutRet
     setError(null);
     clearErrorTimer();
     try {
-      const marketSnapshot = cache.getSnapshot<MarketState>(['marketState', String(marketId)]);
-      const numBuckets = marketSnapshot.data?.config?.numBuckets;
-      if (!numBuckets) throw new Error('Market data not loaded. Cannot determine numBuckets for validation.');
+      const numBuckets =
+        options?.numBuckets ??
+        cache.getSnapshot<MarketState>(['marketState', String(marketId)]).data?.config?.numBuckets;
+      if (!numBuckets) {
+        throw new Error('Market data not loaded. Cannot determine numBuckets for validation.');
+      }
 
       const result = await previewPayoutCurve(client, marketId, belief, collateral, numBuckets, undefined, { signal: controller.signal });
       return result;
@@ -65,7 +76,7 @@ export function usePreviewPayout(marketId: string | number): UsePreviewPayoutRet
         setLoading(false);
       }
     }
-  }, [client, marketId, cache, clearErrorTimer]);
+  }, [client, marketId, cache, clearErrorTimer, options?.numBuckets]);
 
   const reset = useCallback(() => {
     setError(null);

@@ -48,17 +48,16 @@ export function MarketsHome() {
             <BrandMark accentClassName="fs-markets-accent" />
           </div>
           <p className="fs-markets-tagline">
-            Pick any open market. An AI reads the news, sketches a full belief
-            curve, and shows where it breaks from the crowd—plus what you&apos;d
-            earn if you traded that view. No wallet required.
+            Pick any open market. An agent reads the news, sketches a full belief
+            curve, and shows where it breaks from the crowd. No wallet required.
           </p>
           <ul className="fs-markets-bullets">
             <li>Exa polls the web every 5 minutes; Claude revises only when headlines change</li>
             <li>Curves, not coin flips: Gaussian, bimodal, range, and more</li>
-            <li>Agent vs consensus on one chart, with live payout preview</li>
-            {isRemoteSessionEnabled() && (
+            <li>Agent vs consensus on one chart</li>
+            {/* {isRemoteSessionEnabled() && (
               <li>Shared forecast memory in Postgres—open a market and skip the cold start</li>
-            )}
+            )} */}
           </ul>
         </div>
         <div className="fs-markets-meta" style={{ fontFamily: MONO }}>

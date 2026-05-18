@@ -276,6 +276,67 @@ button.fs-header-back {
   gap: 12px;
 }
 
+.fs-density-stats {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--fs-border);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  font-family: var(--fs-agent-mono);
+  font-size: 11px;
+}
+
+.fs-density-stats-head,
+.fs-density-stat-row {
+  display: grid;
+  grid-template-columns: 88px 1fr 1fr;
+  gap: 8px 12px;
+  align-items: baseline;
+}
+
+.fs-density-stats-head {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fs-text-secondary);
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--fs-border);
+}
+
+.fs-density-stat-label {
+  color: var(--fs-text-secondary);
+}
+
+.fs-density-stat-val {
+  color: var(--fs-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.fs-density-divergence {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--fs-border);
+  color: var(--fs-accent);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.fs-chart-tooltip {
+  background: var(--fs-surface);
+  border: 1px solid var(--fs-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-family: var(--fs-agent-mono);
+  font-size: 11px;
+}
+
+.fs-chart-tooltip-x {
+  margin-bottom: 6px;
+  color: var(--fs-text);
+  font-weight: 600;
+}
+
 .fs-markets-meta {
   font-size: 12px;
   color: var(--fs-text-secondary, #8b949e);

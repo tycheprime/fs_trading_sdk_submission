@@ -3,7 +3,7 @@ import type { MarketState } from '@functionspace/core';
 import { compareAgentToCrowd } from '../compare';
 import { Panel } from './Panel';
 import { MONO } from '../theme'; // stat rows only
-import { formatOutcome } from '../format';
+import { formatOutcome, formatProb } from '../format';
 import type { AgentEstimate, BeliefBuild } from '../types';
 
 const DIV_COLOR = {
@@ -65,14 +65,19 @@ export function AgentVsCrowdPanel({
             style={{ fontFamily: MONO, fontSize: 12 }}
           >
             <CompareRow
-              label="Crowd μ"
+              label="μ_crowd"
               value={formatOutcome(cmp.consensusMean, units)}
               accent="var(--fs-accent)"
             />
             <CompareRow
-              label="Agent center"
+              label="μ_agent"
               value={formatOutcome(cmp.agentCenter, units)}
               accent="var(--fs-primary)"
+            />
+            <CompareRow
+              label="σ_crowd / σ_agent"
+              value={`${formatOutcome(cmp.crowdStdDev, units)} / ${formatOutcome(cmp.agentStdDev, units)}`}
+              accent="var(--fs-text-secondary)"
             />
             <CompareRow
               label="Gap"
@@ -88,6 +93,13 @@ export function AgentVsCrowdPanel({
               value={cmp.agentShapeLabel}
               accent="var(--fs-text)"
             />
+            {cmp.l1Distance != null && cmp.pAgentAboveCrowdMean != null && (
+              <CompareRow
+                label="L₁ / P(x>μ_c)"
+                value={`${cmp.l1Distance.toFixed(4)} / ${formatProb(cmp.pAgentAboveCrowdMean)}`}
+                accent={DIV_COLOR[cmp.divergence]}
+              />
+            )}
           </div>
         </div>
       )}

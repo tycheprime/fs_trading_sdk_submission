@@ -160,7 +160,6 @@ export function useAgent(marketId: string | number): UseAgentResult {
       setStatus('previewing');
       const beliefBuild = estimateToBelief(session.lastEstimate!, mkt.config);
       validateBeliefVector(beliefBuild.belief, mkt.config.numBuckets);
-      ctx.setPreviewBelief(beliefBuild.belief);
       record = { ...record, beliefBuild };
       setBeliefBuild(beliefBuild);
 
@@ -200,7 +199,6 @@ export function useAgent(marketId: string | number): UseAgentResult {
       if (session.lastEstimate && market) {
         const build = estimateToBelief(session.lastEstimate, market.config);
         setBeliefBuild(build);
-        ctx.setPreviewBelief(build.belief);
       }
     };
 
@@ -243,13 +241,6 @@ export function useAgent(marketId: string | number): UseAgentResult {
       void runCycle();
     }
   }, [autoMode, cacheReady, nextRunAt, now, runCycle, marketLoading, market]);
-
-  useEffect(() => {
-    return () => {
-      ctx.setPreviewBelief(null);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const secondsUntilNext =
     autoMode && nextRunAt != null

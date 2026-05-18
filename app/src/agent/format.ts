@@ -28,6 +28,17 @@ export function timeAgo(ts: number): string {
   return Math.floor(sec / 3600) + 'h ago';
 }
 
+export function formatDensity(y: number): string {
+  if (!Number.isFinite(y) || y === 0) return '0';
+  if (y < 1e-4) return y.toExponential(2);
+  if (y < 1) return y.toFixed(5);
+  return y.toFixed(3);
+}
+
+export function formatProb(p: number): string {
+  return `${(p * 100).toFixed(1)}%`;
+}
+
 export function clockTime(ts: number): string {
   return new Date(ts).toLocaleTimeString('en-US', {
     hour12: false,

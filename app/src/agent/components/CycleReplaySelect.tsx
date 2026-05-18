@@ -1,5 +1,5 @@
 import { MONO } from '../theme';
-import type { BeliefBuild, CycleRecord } from '../types';
+import type { AgentEstimate, BeliefBuild, CycleRecord } from '../types';
 
 interface CycleReplaySelectProps {
   cycles: CycleRecord[];
@@ -65,4 +65,14 @@ export function resolveChartBeliefBuild(
   if (replayCycleId == null) return live;
   const rec = cycles.find((c) => c.id === replayCycleId);
   return rec?.beliefBuild ?? live;
+}
+
+export function resolveChartEstimate(
+  live: AgentEstimate | null,
+  cycles: CycleRecord[],
+  replayCycleId: number | null,
+): AgentEstimate | null {
+  if (replayCycleId == null) return live;
+  const rec = cycles.find((c) => c.id === replayCycleId);
+  return rec?.estimate ?? live;
 }

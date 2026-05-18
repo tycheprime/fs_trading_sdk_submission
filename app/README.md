@@ -7,7 +7,7 @@ Beliefs are curves over a range, not yes/no contracts. The agent compares its fo
 ## Features
 
 - **Markets terminal** — grid of open markets with consensus hints and agent status
-- **Per-market dashboard** — consensus chart, agent target curve, Exa sources, cycle log, payout preview
+- **Per-market dashboard** — consensus chart, agent target curve, Exa sources, cycle log
 - **Auto-cycle** — Exa search on an interval; Claude runs only when new URLs appear
 - **Structured beliefs** — Claude chooses a distribution type (`gaussian`, `range`, `bimodal`, etc.); the SDK builds the curve
 - **Shared sessions** — optional Postgres-backed API so visitors see prior forecasts without re-running Claude
