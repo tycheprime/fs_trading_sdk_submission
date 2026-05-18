@@ -2,6 +2,7 @@ import type { MarketState } from '@functionspace/core';
 import { MarketsLink } from './MarketsLink';
 import { StatusPill } from './StatusPill';
 import type { AgentStatus } from '../types';
+import { BrandMark } from '../brand';
 
 interface HeaderProps {
   status: AgentStatus;
@@ -17,7 +18,7 @@ export function Header({ status, market }: HeaderProps) {
         </MarketsLink>
         <div className="fs-agent-header-titles">
           <MarketsLink className="fs-header-brand">
-            TYCHEPRIME <span className="fs-header-brand-accent">AGENT</span>
+            <BrandMark />
           </MarketsLink>
           <div className="fs-header-subtitle">
             <MarketsLink className="fs-agent-link fs-header-back">

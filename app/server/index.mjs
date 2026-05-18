@@ -1,5 +1,5 @@
 /**
- * Tycheprime Agent cache API — Postgres (Render) or local JSON files.
+ * TychePrime x FunctionSPACE API — Postgres (Render) or local JSON files.
  */
 import http from 'node:http';
 import { loadAppEnv, storageMode } from './db.mjs';

@@ -1,4 +1,4 @@
-# Tycheprime Agent
+# TychePrime x FunctionSPACE
 
 A multi-market forecasting demo built on the [FunctionSpace Trading SDK](https://github.com/tycheprime/fs_trading_sdk). It browses open [functionSPACE](https://ecosystem.functionspace.dev/learn/) prediction markets, polls the web with [Exa](https://exa.ai), and uses Claude to maintain a **belief curve** (probability distribution over a numeric outcome) for each market.
 

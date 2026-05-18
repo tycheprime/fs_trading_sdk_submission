@@ -2,7 +2,7 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
-// Tycheprime Agent calls exa.ai and the Claude API. Both are reached through dev-server
+// TychePrime x FunctionSPACE calls exa.ai and the Claude API. Both are reached through dev-server
 // proxies so the API keys stay server-side and never reach the browser bundle.
 // Keys are read from app/.env.local (gitignored). See README_AGENT.md.
 export default defineConfig(({ mode }) => {

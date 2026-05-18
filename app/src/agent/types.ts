@@ -1,4 +1,4 @@
-// Shared types for the Tycheprime Agent app.
+// Shared types for the TychePrime x FunctionSPACE app.
 
 export type AgentDistributionType =
   | 'gaussian'

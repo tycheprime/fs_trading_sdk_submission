@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useMarkets } from '@functionspace/react';
 import { MarketGrid } from '../agent/components/MarketGrid';
 import { MONO } from '../agent/theme';
+import { BrandMark } from '../agent/brand';
 import {
   fetchCacheStats,
   isRemoteSessionEnabled,
@@ -44,7 +45,7 @@ export function MarketsHome() {
       <header className="fs-markets-header">
         <div>
           <div className="fs-markets-brand">
-            TYCHEPRIME <span className="fs-markets-accent">AGENT</span>
+            <BrandMark accentClassName="fs-markets-accent" />
           </div>
           <p className="fs-markets-tagline">
             News-driven forecasts for any open functionSPACE market: web search,

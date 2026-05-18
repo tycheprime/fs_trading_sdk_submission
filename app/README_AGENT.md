@@ -1,4 +1,4 @@
-# Tycheprime Agent
+# TychePrime x FunctionSPACE
 
 Documentation for this app has moved to **[README.md](./README.md)**.
 
