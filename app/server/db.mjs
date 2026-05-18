@@ -17,11 +17,9 @@ function cleanEnvValue(value) {
   return s.trim();
 }
 
-/** Load app/.env when running the server outside Render. */
-export function loadAppEnv() {
-  const envPath = path.join(__dirname, '..', '.env');
-  if (!existsSync(envPath)) return;
-  for (const line of readFileSync(envPath, 'utf8').split('\n')) {
+function loadEnvFile(filePath) {
+  if (!existsSync(filePath)) return;
+  for (const line of readFileSync(filePath, 'utf8').split('\n')) {
     const t = line.trim();
     if (!t || t.startsWith('#')) continue;
     const i = t.indexOf('=');
@@ -30,6 +28,13 @@ export function loadAppEnv() {
     if (process.env[key]) continue;
     process.env[key] = cleanEnvValue(t.slice(i + 1));
   }
+}
+
+/** Load app/.env and app/.env.local when running the server outside Render. */
+export function loadAppEnv() {
+  const root = path.join(__dirname, '..');
+  loadEnvFile(path.join(root, '.env'));
+  loadEnvFile(path.join(root, '.env.local'));
 }
 
 function cleanConnectionString(value) {

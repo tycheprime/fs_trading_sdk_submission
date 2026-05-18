@@ -132,16 +132,18 @@ Run from `app/` or via `npm run <script> -w app` from the repo root.
 | `VITE_FS_BASE_URL` | functionSPACE engine API base URL |
 | `VITE_FS_USERNAME` / `VITE_FS_PASSWORD` | API auth (when `VITE_FS_AUTO_AUTH=true`) |
 | `VITE_AGENT_CACHE_URL` | Agent API URL (`/agent-cache` locally, full `https://...` in production) |
+| `VITE_AGENT_API_SECRET` | Same value as `AGENT_API_SECRET` (baked into JS; blocks casual abuse, not hidden from users) |
 | `VITE_AGENT_CACHE_TARGET` | Dev only: proxy target for `/agent-cache` (default `http://localhost:8787`) |
 
 ### Agent API only (never on the static site)
 
 | Variable | Description |
 |----------|-------------|
+| `AGENT_API_SECRET` | Required in production when Exa/Claude keys are set. Clients send header `X-Agent-Secret`. |
 | `EXA_API_KEY` | Exa search |
 | `ANTHROPIC_API_KEY` | Claude |
 | `DATABASE_URL` or `DB_URL` | Postgres connection string |
-| `ALLOWED_ORIGINS` | Comma-separated CORS origins (e.g. `https://fs-trading-sdk.onrender.com`) |
+| `ALLOWED_ORIGINS` | Comma-separated CORS origins for the static site (must include every deploy URL, e.g. `https://tycheprime-functionspace.onrender.com`) |
 | `PORT` | Listen port (Render sets this automatically) |
 
 ## Project structure
@@ -188,6 +190,8 @@ When `VITE_AGENT_CACHE_URL` is set, the UI syncs sessions and proxies LLM/search
 | `/claude/*` | * | Proxy to Anthropic (server injects API key) |
 
 The proxy **strips** any `x-api-key` from the browser and injects the real key server-side (the Anthropic SDK sends a placeholder key in the client).
+
+**Public deploy:** set the same random `AGENT_API_SECRET` on the agent API and `VITE_AGENT_API_SECRET` on the static site (see `.env.example`). In production, the server refuses to start if Exa/Claude keys are set without `AGENT_API_SECRET`. Only `GET /health` stays unauthenticated. CORS alone does not protect direct API calls; the shared secret does.
 
 ### Logs
 
@@ -245,6 +249,7 @@ A blueprint example lives in [`../render.yaml`](../render.yaml).
 
 | Symptom | Likely cause | Fix |
 |---------|----------------|-----|
+| `Failed to fetch` on agent cycle | New static URL not in agent API `ALLOWED_ORIGINS` (browser CORS) | Add `https://YOUR-STATIC-SITE.onrender.com` to `ALLOWED_ORIGINS` on the **agent API** service and redeploy |
 | `Unexpected end of JSON input` on Exa | UI hitting static host `/exa/search` | Set `VITE_AGENT_CACHE_URL` and redeploy static site |
 | `Connection error` on Claude (Exa works) | CORS: blocked SDK headers or duplicate `Access-Control-Allow-Origin` (`*` + your site) | Redeploy agent API (latest `proxy.mjs` strips upstream CORS) |
 | `invalid x-api-key` on Claude | Browser placeholder key reached Anthropic | Deploy agent API that strips client `x-api-key` |

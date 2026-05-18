@@ -8,10 +8,12 @@ import path from 'path';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const agentCacheUrl = env.VITE_AGENT_CACHE_URL || '/agent-cache';
+  const agentApiSecret = env.VITE_AGENT_API_SECRET || env.AGENT_API_SECRET || '';
 
   return {
     define: {
       'import.meta.env.VITE_AGENT_CACHE_URL': JSON.stringify(agentCacheUrl),
+      'import.meta.env.VITE_AGENT_API_SECRET': JSON.stringify(agentApiSecret),
     },
     plugins: [react()],
     server: {
@@ -50,6 +52,13 @@ export default defineConfig(({ mode }) => {
           target: env.VITE_AGENT_CACHE_TARGET || 'http://localhost:8787',
           changeOrigin: true,
           rewrite: (p) => p.replace(/^\/agent-cache/, ''),
+          configure: (proxy) => {
+            proxy.on('proxyReq', (proxyReq) => {
+              if (agentApiSecret) {
+                proxyReq.setHeader('x-agent-secret', agentApiSecret);
+              }
+            });
+          },
         },
       },
     },

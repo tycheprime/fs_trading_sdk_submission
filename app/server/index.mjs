@@ -17,14 +17,24 @@ import {
   proxyToUpstream,
 } from './proxy.mjs';
 import { agentLog } from './log.mjs';
+import {
+  AGENT_SECRET_HEADER,
+  assertProductionAuthConfig,
+  isAgentAuthEnforced,
+  verifyAgentAuth,
+} from './auth.mjs';
 
 loadAppEnv();
+assertProductionAuthConfig();
 
 const PORT = Number(process.env.PORT || 8787);
-const ALLOWED_ORIGINS = (
-  process.env.ALLOWED_ORIGINS ||
-  'http://localhost:3000,https://fs-trading-sdk.onrender.com'
-)
+const DEFAULT_ORIGINS = [
+  'http://localhost:3000',
+  'https://fs-trading-sdk.onrender.com',
+  'https://tycheprime-functionspace.onrender.com',
+].join(',');
+
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || DEFAULT_ORIGINS)
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
@@ -36,7 +46,7 @@ function corsHeaders(origin, req) {
     'Access-Control-Allow-Methods': 'GET, PUT, POST, OPTIONS',
     'Access-Control-Allow-Headers': requested
       ? requested
-      : 'Content-Type, x-api-key, anthropic-version, anthropic-dangerous-direct-browser-access',
+      : `Content-Type, ${AGENT_SECRET_HEADER}, x-api-key, anthropic-version, anthropic-dangerous-direct-browser-access`,
   };
   if (allowed) {
     h['Access-Control-Allow-Origin'] = origin;
@@ -57,6 +67,13 @@ async function readJsonBody(req) {
   return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
 }
 
+function rejectUnlessAuthed(req, res, baseHeaders) {
+  const auth = verifyAgentAuth(req);
+  if (auth.ok) return true;
+  send(res, auth.status, { error: auth.error }, baseHeaders);
+  return false;
+}
+
 const server = http.createServer(async (req, res) => {
   const origin = req.headers.origin || '';
   const baseHeaders = corsHeaders(origin, req);
@@ -71,6 +88,7 @@ const server = http.createServer(async (req, res) => {
 
   try {
     if (url.pathname === '/debug/status' && req.method === 'GET') {
+      if (!rejectUnlessAuthed(req, res, baseHeaders)) return;
       send(
         res,
         200,
@@ -87,6 +105,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (url.pathname.startsWith('/exa/')) {
+      if (!rejectUnlessAuthed(req, res, baseHeaders)) return;
       if (!process.env.EXA_API_KEY?.trim()) {
         send(res, 503, { error: 'EXA_API_KEY not configured on agent server' }, baseHeaders);
         return;
@@ -96,6 +115,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (url.pathname.startsWith('/claude/')) {
+      if (!rejectUnlessAuthed(req, res, baseHeaders)) return;
       if (!process.env.ANTHROPIC_API_KEY?.trim()) {
         send(
           res,
@@ -125,18 +145,21 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && url.pathname === '/stats') {
+      if (!rejectUnlessAuthed(req, res, baseHeaders)) return;
       const stats = await getGlobalStats();
       send(res, 200, { stats }, baseHeaders);
       return;
     }
 
     if (req.method === 'GET' && url.pathname === '/sessions') {
+      if (!rejectUnlessAuthed(req, res, baseHeaders)) return;
       const summaries = await listSummaries();
       send(res, 200, { summaries }, baseHeaders);
       return;
     }
 
     if (req.method === 'POST' && url.pathname === '/sessions/bulk') {
+      if (!rejectUnlessAuthed(req, res, baseHeaders)) return;
       const body = await readJsonBody(req);
       const sessions = Array.isArray(body.sessions) ? body.sessions : [];
       const result = await bulkWriteSessions(sessions);
@@ -146,6 +169,7 @@ const server = http.createServer(async (req, res) => {
 
     const historyMatch = url.pathname.match(/^\/sessions\/([^/]+)\/forecasts$/);
     if (historyMatch && req.method === 'GET') {
+      if (!rejectUnlessAuthed(req, res, baseHeaders)) return;
       const marketId = decodeURIComponent(historyMatch[1]);
       const limit = Number(url.searchParams.get('limit') || 30);
       const forecasts = await listForecastHistory(marketId, limit);
@@ -155,6 +179,7 @@ const server = http.createServer(async (req, res) => {
 
     const sessionMatch = url.pathname.match(/^\/sessions\/([^/]+)$/);
     if (sessionMatch) {
+      if (!rejectUnlessAuthed(req, res, baseHeaders)) return;
       const marketId = decodeURIComponent(sessionMatch[1]);
       if (req.method === 'GET') {
         const row = await readSession(marketId);
@@ -205,9 +230,15 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
+  if (!isAgentAuthEnforced()) {
+    agentLog('warn', 'agent_auth_disabled', {
+      hint: 'Set AGENT_API_SECRET on the agent API and VITE_AGENT_API_SECRET on the static site before a public deploy.',
+    });
+  }
   agentLog('info', 'server_start', {
     port: PORT,
     storage: storageMode(),
+    agentAuthEnforced: isAgentAuthEnforced(),
     exaKeyConfigured: Boolean(process.env.EXA_API_KEY?.trim()),
     anthropicKeyConfigured: Boolean(process.env.ANTHROPIC_API_KEY?.trim()),
     allowedOrigins: ALLOWED_ORIGINS,

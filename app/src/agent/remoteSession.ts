@@ -1,5 +1,6 @@
 import type { MarketAgentSession } from './marketSession';
 import type { AgentEstimate } from './types';
+import { agentAuthHeaders } from './agentAuth';
 
 function cacheBase(): string {
   const raw = import.meta.env.VITE_AGENT_CACHE_URL?.replace(/\/$/, '') ?? '';
@@ -23,7 +24,9 @@ export async function fetchRemoteSession(
 ): Promise<{ session: MarketAgentSession | null; updatedAt: number | null }> {
   if (!isRemoteSessionEnabled()) return { session: null, updatedAt: null };
   try {
-    const res = await fetch(cacheUrl(`/sessions/${encodeURIComponent(String(marketId))}`));
+    const res = await fetch(cacheUrl(`/sessions/${encodeURIComponent(String(marketId))}`), {
+      headers: agentAuthHeaders(),
+    });
     if (res.status === 404) return { session: null, updatedAt: null };
     if (!res.ok) return { session: null, updatedAt: null };
     const data = (await res.json()) as {
@@ -47,7 +50,7 @@ export async function pushRemoteSession(
   try {
     await fetch(cacheUrl(`/sessions/${encodeURIComponent(session.marketId)}`), {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...agentAuthHeaders() },
       body: JSON.stringify({
         session,
         newSourceCount: meta?.newSourceCount ?? 0,
@@ -67,7 +70,7 @@ export async function bulkPushLocalSessions(
   try {
     const res = await fetch(cacheUrl('/sessions/bulk'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...agentAuthHeaders() },
       body: JSON.stringify({ sessions }),
     });
     if (!res.ok) return 0;
@@ -97,6 +100,7 @@ export async function fetchForecastHistory(
       cacheUrl(
         `/sessions/${encodeURIComponent(String(marketId))}/forecasts?limit=${limit}`,
       ),
+      { headers: agentAuthHeaders() },
     );
     if (!res.ok) return [];
     const data = (await res.json()) as { forecasts?: StoredForecast[] };
@@ -118,7 +122,7 @@ export interface SessionSummary {
 export async function fetchSessionSummaries(): Promise<SessionSummary[]> {
   if (!isRemoteSessionEnabled()) return [];
   try {
-    const res = await fetch(cacheUrl('/sessions'));
+    const res = await fetch(cacheUrl('/sessions'), { headers: agentAuthHeaders() });
     if (!res.ok) return [];
     const data = (await res.json()) as { summaries?: SessionSummary[] };
     return data.summaries ?? [];
@@ -136,7 +140,7 @@ export interface CacheStats {
 export async function fetchCacheStats(): Promise<CacheStats | null> {
   if (!isRemoteSessionEnabled()) return null;
   try {
-    const res = await fetch(cacheUrl('/stats'));
+    const res = await fetch(cacheUrl('/stats'), { headers: agentAuthHeaders() });
     if (!res.ok) return null;
     const data = (await res.json()) as { stats?: CacheStats };
     return data.stats ?? null;

@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { agentApiUrl } from './agentApi';
+import { agentAuthHeaders } from './agentAuth';
 import type { AgentDistributionType, AgentEstimate, ExaResult } from './types';
 import { AGENT_DISTRIBUTION_TYPES } from './distributions';
 
@@ -8,6 +9,7 @@ const claude = new Anthropic({
   baseURL: agentApiUrl('/claude'),
   dangerouslyAllowBrowser: true,
   maxRetries: 1,
+  defaultHeaders: agentAuthHeaders(),
 });
 
 const MODEL = 'claude-sonnet-4-6';

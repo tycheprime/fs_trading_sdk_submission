@@ -18,10 +18,12 @@ services:
           name: tycheprime-agent-db
           property: connectionString
       - key: ALLOWED_ORIGINS
-        value: "https://fs-trading-sdk.onrender.com,http://localhost:3000"
+        value: "https://tycheprime-functionspace.onrender.com,https://fs-trading-sdk.onrender.com,http://localhost:3000"
       - key: EXA_API_KEY
         sync: false
       - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: AGENT_API_SECRET
         sync: false
 
   - type: web
@@ -40,6 +42,8 @@ services:
           type: web
           name: tycheprime-agent-cache
           property: host
+      - key: VITE_AGENT_API_SECRET
+        sync: false
     routes:
       - type: rewrite
         source: /exa/*

@@ -1,4 +1,5 @@
 import { agentApiUrl } from './agentApi';
+import { agentAuthHeaders } from './agentAuth';
 import type { ExaResult } from './types';
 
 export async function searchMarketNews(
@@ -13,7 +14,7 @@ export async function searchMarketNews(
 
   const res = await fetch(agentApiUrl('/exa/search'), {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...agentAuthHeaders() },
     signal,
     body: JSON.stringify({
       query,
@@ -27,6 +28,12 @@ export async function searchMarketNews(
   if (!res.ok) {
     const body = await res.text();
     if (res.status === 401 || res.status === 403) {
+      const bodyLower = body.toLowerCase();
+      if (bodyLower.includes('agent_secret')) {
+        throw new Error(
+          'Agent API rejected the request. Set matching AGENT_API_SECRET (server) and VITE_AGENT_API_SECRET (static site build).',
+        );
+      }
       throw new Error(
         'exa.ai rejected the request. Set EXA_API_KEY on the agent server (local: app/.env.local; Render: cache web service env).',
       );

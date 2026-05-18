@@ -13,9 +13,6 @@ export function Header({ status, market }: HeaderProps) {
   return (
     <header className="fs-agent-header">
       <div className="fs-agent-header-left">
-        <MarketsLink className="fs-header-logo" aria-label="All markets">
-          FS
-        </MarketsLink>
         <div className="fs-agent-header-titles">
           <MarketsLink className="fs-header-brand">
             <BrandMark />

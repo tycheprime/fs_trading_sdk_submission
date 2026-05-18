@@ -124,24 +124,6 @@ body {
   min-width: 0;
 }
 
-.fs-header-logo {
-  width: 38px;
-  height: 38px;
-  border-radius: 9px;
-  background: var(--fs-primary, #f7931a);
-  color: #1a1206;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 800;
-  flex-shrink: 0;
-  text-decoration: none;
-  position: relative;
-  z-index: 1;
-  box-sizing: border-box;
-}
-
 .fs-agent-header-titles {
   min-width: 0;
 }
@@ -183,16 +165,11 @@ body {
 }
 
 /* MarketsLink uses <button> to avoid React Router intercepting <a href="/"> */
-button.fs-header-logo,
 button.fs-header-brand,
 button.fs-header-back,
 button.fs-agent-link {
   font: inherit;
   cursor: pointer;
-}
-
-button.fs-header-logo {
-  border: none;
 }
 
 button.fs-header-brand,
