@@ -38,6 +38,11 @@ A small Node API (`app/server/index.mjs`) stores each market's session in **Rend
 | `POST /sessions/bulk` | Import many sessions (localStorage backfill) |
 | `GET /sessions/:id/forecasts` | Revision history for the cycle log |
 | `GET /stats` | Global counts (markets cached, total revisions) |
+| `GET /debug/status` | Key config flags + storage (no secrets) |
+
+### Server logs (Render)
+
+The agent API writes **JSON lines** to stdout (`proxy_start`, `proxy_done`, `proxy_upstream_error`). In Render → **fs-trading-agent-api** → **Logs**, filter by `proxy` or `claude`.
 
 ## Setup
 

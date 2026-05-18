@@ -245,7 +245,12 @@ async function runForecastTurn(
     if (err instanceof Anthropic.APIError) {
       throw new Error(`Claude API error ${err.status}: ${err.message}`);
     }
-    throw err;
+    const detail = err instanceof Error ? err.message : String(err);
+    const cause =
+      err instanceof Error && err.cause instanceof Error
+        ? ` (${err.cause.message})`
+        : '';
+    throw new Error(`Claude request failed: ${detail}${cause}`);
   }
 
   const toolUse = response.content.find(

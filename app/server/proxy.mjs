@@ -1,4 +1,5 @@
 import https from 'node:https';
+import { agentLog } from './log.mjs';
 
 const HOP_BY_HOP = new Set([
   'connection',
@@ -11,6 +12,9 @@ const HOP_BY_HOP = new Set([
   'upgrade',
   'host',
 ]);
+
+/** Never forward client API keys; the server injects real keys upstream. */
+const STRIP_FROM_CLIENT = new Set(['x-api-key', ...HOP_BY_HOP]);
 
 async function readBody(req) {
   const chunks = [];
@@ -28,14 +32,14 @@ function filterResponseHeaders(headers) {
 }
 
 function forwardHeaders(req, extra = {}) {
-  const out = { ...extra };
+  const out = {};
   for (const [key, value] of Object.entries(req.headers)) {
     const lower = key.toLowerCase();
-    if (HOP_BY_HOP.has(lower)) continue;
+    if (STRIP_FROM_CLIENT.has(lower)) continue;
     if (lower === 'content-length' && req.method === 'GET') continue;
     out[key] = value;
   }
-  return out;
+  return { ...out, ...extra };
 }
 
 /**
@@ -44,6 +48,20 @@ function forwardHeaders(req, extra = {}) {
 export async function proxyToUpstream(req, res, corsHeaders, config) {
   const url = new URL(req.url || '/', `http://${req.headers.host}`);
   const upstreamPath = config.mapPath(url.pathname, url.search);
+  const label = config.label || config.hostname;
+  const started = Date.now();
+  const clientKey = req.headers['x-api-key'];
+  const hadClientKey =
+    typeof clientKey === 'string' && clientKey.length > 0 && clientKey !== '(none)';
+
+  agentLog('info', 'proxy_start', {
+    proxy: label,
+    method: req.method,
+    path: url.pathname,
+    origin: req.headers.origin || null,
+    clientKeyStripped: hadClientKey,
+  });
+
   const body =
     req.method === 'GET' || req.method === 'HEAD' ? undefined : await readBody(req);
 
@@ -59,7 +77,15 @@ export async function proxyToUpstream(req, res, corsHeaders, config) {
         headers,
       },
       (upstreamRes) => {
-        res.writeHead(upstreamRes.statusCode || 502, {
+        const status = upstreamRes.statusCode || 502;
+        agentLog(status >= 400 ? 'warn' : 'info', 'proxy_done', {
+          proxy: label,
+          method: req.method,
+          path: url.pathname,
+          upstreamStatus: status,
+          ms: Date.now() - started,
+        });
+        res.writeHead(status, {
           ...corsHeaders,
           ...filterResponseHeaders(upstreamRes.headers),
         });
@@ -69,6 +95,13 @@ export async function proxyToUpstream(req, res, corsHeaders, config) {
     );
 
     upstream.on('error', (err) => {
+      agentLog('error', 'proxy_upstream_error', {
+        proxy: label,
+        method: req.method,
+        path: url.pathname,
+        error: err.message,
+        ms: Date.now() - started,
+      });
       if (!res.headersSent) {
         res.writeHead(502, { 'Content-Type': 'application/json', ...corsHeaders });
         res.end(JSON.stringify({ error: err.message }));
@@ -86,6 +119,7 @@ export async function proxyToUpstream(req, res, corsHeaders, config) {
 export function exaProxyConfig() {
   const apiKey = (process.env.EXA_API_KEY || '').trim();
   return {
+    label: 'exa',
     hostname: 'api.exa.ai',
     mapPath: (pathname, search) => {
       const path = pathname.replace(/^\/exa/, '') || '/';
@@ -98,13 +132,17 @@ export function exaProxyConfig() {
 export function claudeProxyConfig() {
   const apiKey = (process.env.ANTHROPIC_API_KEY || '').trim();
   return {
+    label: 'claude',
     hostname: 'api.anthropic.com',
     mapPath: (pathname, search) => {
       const path = pathname.replace(/^\/claude/, '') || '/';
       return `${path}${search}`;
     },
     extraHeaders: () => {
-      const h = { 'anthropic-version': '2023-06-01' };
+      const h = {
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      };
       if (apiKey) h['x-api-key'] = apiKey;
       return h;
     },

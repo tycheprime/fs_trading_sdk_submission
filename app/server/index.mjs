@@ -16,6 +16,7 @@ import {
   exaProxyConfig,
   proxyToUpstream,
 } from './proxy.mjs';
+import { agentLog } from './log.mjs';
 
 loadAppEnv();
 
@@ -64,8 +65,25 @@ const server = http.createServer(async (req, res) => {
   }
 
   const url = new URL(req.url || '/', `http://${req.headers.host}`);
+  const reqId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
   try {
+    if (url.pathname === '/debug/status' && req.method === 'GET') {
+      send(
+        res,
+        200,
+        {
+          ok: true,
+          storage: storageMode(),
+          exaKeyConfigured: Boolean(process.env.EXA_API_KEY?.trim()),
+          anthropicKeyConfigured: Boolean(process.env.ANTHROPIC_API_KEY?.trim()),
+          allowedOrigins: ALLOWED_ORIGINS,
+        },
+        baseHeaders,
+      );
+      return;
+    }
+
     if (url.pathname.startsWith('/exa/')) {
       if (!process.env.EXA_API_KEY?.trim()) {
         send(res, 503, { error: 'EXA_API_KEY not configured on agent server' }, baseHeaders);
@@ -90,7 +108,17 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && url.pathname === '/health') {
-      send(res, 200, { ok: true, storage: storageMode() }, baseHeaders);
+      send(
+        res,
+        200,
+        {
+          ok: true,
+          storage: storageMode(),
+          exaKeyConfigured: Boolean(process.env.EXA_API_KEY?.trim()),
+          anthropicKeyConfigured: Boolean(process.env.ANTHROPIC_API_KEY?.trim()),
+        },
+        baseHeaders,
+      );
       return;
     }
 
@@ -151,9 +179,20 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
+    agentLog('info', 'request_404', {
+      reqId,
+      method: req.method,
+      path: url.pathname,
+      origin: origin || null,
+    });
     send(res, 404, { error: 'not_found' }, baseHeaders);
   } catch (err) {
-    console.error(err);
+    agentLog('error', 'request_error', {
+      reqId,
+      method: req.method,
+      path: url.pathname,
+      error: err instanceof Error ? err.message : String(err),
+    });
     send(
       res,
       500,
@@ -164,5 +203,11 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Tycheprime Agent cache on :${PORT} (${storageMode()})`);
+  agentLog('info', 'server_start', {
+    port: PORT,
+    storage: storageMode(),
+    exaKeyConfigured: Boolean(process.env.EXA_API_KEY?.trim()),
+    anthropicKeyConfigured: Boolean(process.env.ANTHROPIC_API_KEY?.trim()),
+    allowedOrigins: ALLOWED_ORIGINS,
+  });
 });
