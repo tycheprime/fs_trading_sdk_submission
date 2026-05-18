@@ -1,5 +1,20 @@
 import type { FSConfig } from './types.js';
 
+async function readResponseJson(res: Response, context: string): Promise<unknown> {
+  if (typeof res.text === 'function') {
+    const text = await res.text();
+    try {
+      return text ? JSON.parse(text) : {};
+    } catch {
+      const hint = text.trimStart().startsWith('<!')
+        ? ' Response was HTML (often a missing /fs-api rewrite or wrong baseUrl).'
+        : '';
+      throw new Error(`API returned non-JSON on ${context}.${hint}`);
+    }
+  }
+  return res.json();
+}
+
 export class FSClient {
   private baseUrl: string;
   private token: string | null = null;
@@ -144,10 +159,11 @@ export class FSClient {
       throw new Error(`API error: ${res.status} ${res.statusText} on ${method} ${path}`);
     }
 
-    const data = await res.json();
+    const data = await readResponseJson(res, `${method} ${path}`);
 
-    if (data.success === false) {
-      throw new Error(`API error: ${data.message || JSON.stringify(data)}`);
+    const payload = data as { success?: boolean; message?: string };
+    if (payload.success === false) {
+      throw new Error(`API error: ${payload.message || JSON.stringify(data)}`);
     }
 
     return data as T;
