@@ -1700,6 +1700,25 @@ describe('discoverMarkets', () => {
     );
   });
 
+  it('accepts state_vector when alpha_vector is absent (dev API)', async () => {
+    const rawWithStateVector = {
+      markets: [{
+        ...mockDiscoverMarketsRaw.markets[0],
+        alpha_vector: undefined,
+        state_vector: [5, 10, 20, 30, 20, 10, 5, 2],
+      }],
+    };
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(rawWithStateVector),
+    });
+
+    const client = makeMockClient();
+    const result = await discoverMarkets(client);
+    expect(result).toHaveLength(1);
+    expect(result[0].alpha).toEqual([5, 10, 20, 30, 20, 10, 5, 2]);
+  });
+
   it('throws when market_model_params is missing from list item', async () => {
     const rawWithoutMMP = {
       markets: [{

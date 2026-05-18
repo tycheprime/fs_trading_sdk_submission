@@ -1,6 +1,7 @@
 import type { FSClient } from '../client.js';
 import type { MarketState, ConsensusSummary, ConsensusCurve } from '../types.js';
 import { evaluateDensityPiecewise, evaluateDensityCurve, computeStatistics } from '../math/density.js';
+import { resolveAlphaVector } from './resolveAlphaVector.js';
 
 /**
  * Returns complete market state.
@@ -13,8 +14,7 @@ export async function queryMarketState(
 ): Promise<MarketState> {
   const data = await client.get<any>(`/api/views/markets/${marketId}`, undefined, options?.signal);
 
-  if (data.alpha_vector == null) throw new Error('Missing alpha_vector in market response');
-  const alphaVector: number[] = data.alpha_vector;
+  const alphaVector = resolveAlphaVector(data, 'market response');
   const totalMass = alphaVector.reduce((a: number, b: number) => a + b, 0);
   const consensus = totalMass > 0
     ? alphaVector.map((a: number) => a / totalMass)
