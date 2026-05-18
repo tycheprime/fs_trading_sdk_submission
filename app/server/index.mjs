@@ -29,16 +29,18 @@ const ALLOWED_ORIGINS = (
   .map((s) => s.trim())
   .filter(Boolean);
 
-function corsHeaders(origin) {
+function corsHeaders(origin, req) {
   const allowed = origin && ALLOWED_ORIGINS.includes(origin);
+  const requested = req?.headers['access-control-request-headers'];
   const h = {
     'Access-Control-Allow-Methods': 'GET, PUT, POST, OPTIONS',
-    'Access-Control-Allow-Headers':
-      'Content-Type, x-api-key, anthropic-version, anthropic-dangerous-direct-browser-access',
+    'Access-Control-Allow-Headers': requested
+      ? requested
+      : 'Content-Type, x-api-key, anthropic-version, anthropic-dangerous-direct-browser-access',
   };
   if (allowed) {
     h['Access-Control-Allow-Origin'] = origin;
-    h['Vary'] = 'Origin';
+    h['Vary'] = 'Origin, Access-Control-Request-Headers';
   }
   return h;
 }
@@ -57,7 +59,7 @@ async function readJsonBody(req) {
 
 const server = http.createServer(async (req, res) => {
   const origin = req.headers.origin || '';
-  const baseHeaders = corsHeaders(origin);
+  const baseHeaders = corsHeaders(origin, req);
 
   if (req.method === 'OPTIONS') {
     send(res, 204, '', baseHeaders);

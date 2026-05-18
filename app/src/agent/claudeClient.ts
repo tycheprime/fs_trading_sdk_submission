@@ -246,6 +246,11 @@ async function runForecastTurn(
       throw new Error(`Claude API error ${err.status}: ${err.message}`);
     }
     const detail = err instanceof Error ? err.message : String(err);
+    if (/connection error/i.test(detail)) {
+      throw new Error(
+        'Claude request blocked (often CORS). Redeploy the agent API after updating ALLOWED_ORIGINS / CORS.',
+      );
+    }
     throw new Error(`Claude request failed: ${detail}`);
   }
 

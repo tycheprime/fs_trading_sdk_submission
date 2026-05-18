@@ -31,11 +31,18 @@ function filterResponseHeaders(headers) {
   return out;
 }
 
+function shouldStripClientHeader(lower) {
+  if (STRIP_FROM_CLIENT.has(lower)) return true;
+  // Anthropic SDK telemetry; not needed upstream and triggers strict CORS preflights.
+  if (lower.startsWith('x-stainless-')) return true;
+  return false;
+}
+
 function forwardHeaders(req, extra = {}) {
   const out = {};
   for (const [key, value] of Object.entries(req.headers)) {
     const lower = key.toLowerCase();
-    if (STRIP_FROM_CLIENT.has(lower)) continue;
+    if (shouldStripClientHeader(lower)) continue;
     if (lower === 'content-length' && req.method === 'GET') continue;
     out[key] = value;
   }
